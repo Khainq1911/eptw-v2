@@ -9,7 +9,7 @@ const options: DataSourceOptions & SeederOptions = {
   password: 'postgres',
   database: 'eptw_v2',
   entities: ['src/database/entities/index.ts'],
-  migrations:['./src/database/migrations/*.{ts,js}'],
+  migrations: ['./src/database/migrations/*.{ts,js}'],
   seeds: [__dirname + '/seeders/*.{ts,js}'],
 };
 
