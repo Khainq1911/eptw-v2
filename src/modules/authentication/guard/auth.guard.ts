@@ -9,6 +9,7 @@ import { Request } from 'express';
 import 'dotenv/config';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '@/common/decorators/auth.decorator';
+import { UserJwtPayloadDto } from '../auth.dto';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -27,17 +28,19 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request: Request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
       throw new UnauthorizedException();
     }
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET,
-      });
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
+      const payload: UserJwtPayloadDto = await this.jwtService.verifyAsync(
+        token,
+        {
+          secret: process.env.JWT_SECRET,
+        },
+      );
+
       request['user'] = payload;
     } catch {
       throw new UnauthorizedException();
