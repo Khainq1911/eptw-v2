@@ -3,9 +3,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
-import { AuthModule } from './modules/authentication/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mailer/mail.module';
 import 'dotenv/config';
+import { DeviceModule } from './modules/device/device.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import 'dotenv/config';
     AuthModule,
     DatabaseModule,
     MailModule,
+    DeviceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
