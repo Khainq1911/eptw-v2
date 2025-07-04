@@ -50,4 +50,17 @@ export class DeviceService {
 
     return { message: 'Device updated successfully' };
   }
+
+  async delete(id: number): Promise<{ message: string }> {
+    const existingDevice = await this.deviceRepository.findOne({
+      where: { id: id },
+    });
+    if (!existingDevice) {
+      throw new HttpException('Device not found', 404);
+    }
+
+    await this.deviceRepository.delete(id);
+
+    return { message: 'Device deleted successfully' };
+  }
 }
