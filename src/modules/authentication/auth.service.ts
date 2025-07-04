@@ -43,6 +43,7 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       name: user.name,
+      roleId: user.roleId,
     };
 
     return await this.GenerateTokenService(payload);
@@ -87,6 +88,7 @@ export class AuthService {
           email: user.email,
           phone: user.phone,
           name: user.name,
+          roleId: user.roleId,
         };
 
         return await this.GenerateTokenService(payload);
@@ -112,6 +114,7 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       name: user.name,
+      roleId: user.roleId,
     };
 
     const resetToken = await this.jwtservice.signAsync(payload, {

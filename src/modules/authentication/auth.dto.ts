@@ -15,6 +15,7 @@ export class UserDto {
   email: string;
   phone: string;
   name: string;
+  roleId: number;
 }
 
 export class UserJwtPayloadDto {
