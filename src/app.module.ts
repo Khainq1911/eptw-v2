@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mailer/mail.module';
 import 'dotenv/config';
 import { DeviceModule } from './modules/device/device.module';
+import { ExcelModule } from './modules/excel/excel.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DeviceModule } from './modules/device/device.module';
     DatabaseModule,
     MailModule,
     DeviceModule,
+    ExcelModule,
   ],
   controllers: [AppController],
   providers: [AppService],
