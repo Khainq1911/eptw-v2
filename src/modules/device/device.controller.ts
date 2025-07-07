@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import type { DeviceDto } from './device.dto';
-import { Public } from '@/common/decorators/auth.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { ROLE } from '@/common/enum';
 
