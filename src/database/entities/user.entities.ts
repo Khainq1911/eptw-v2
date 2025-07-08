@@ -1,5 +1,7 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { RoleEntity } from './role.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity({ name: 'user' })
 export class UserEntity extends BaseEntity {
@@ -9,15 +11,22 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'email', unique: true, nullable: false, type: 'varchar' })
   email: string;
 
-  @Column({ name: 'password', nullable: false, type: 'text' })
+  @Exclude()
+  @Column({ name: 'password', nullable: false, type: 'text'})
   password: string;
 
   @Column({ name: 'phone' })
   phone: string;
 
-  @Column({ name: 'refresh_token', nullable: true, type: 'text' })
+  @Exclude()
+  @Column({
+    name: 'refresh_token',
+    nullable: true,
+    type: 'text',
+  })
   refreshToken: string;
 
-  @Column({ name: 'role_id', nullable: false, type: 'int' })
-  roleId: number;
+  @OneToOne(() => RoleEntity)
+  @JoinColumn({ name: 'role_id' })
+  role: RoleEntity;
 }

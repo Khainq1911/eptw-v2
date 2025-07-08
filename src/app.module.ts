@@ -8,6 +8,7 @@ import { MailModule } from './modules/mailer/mail.module';
 import 'dotenv/config';
 import { DeviceModule } from './modules/device/device.module';
 import { ExcelModule } from './modules/excel/excel.module';
+import { TemplateModule } from './modules/template/template.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ExcelModule } from './modules/excel/excel.module';
     MailModule,
     DeviceModule,
     ExcelModule,
+    TemplateModule
   ],
   controllers: [AppController],
   providers: [AppService],

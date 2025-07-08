@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DeviceEntity, RoleEntity, UserEntity } from './entities';
+import {
+  ApprovalTypeEntity,
+  DeviceEntity,
+  RoleEntity,
+  TemplateEntity,
+  UserEntity,
+} from './entities';
 
 @Module({
   imports: [
@@ -15,7 +21,13 @@ import { DeviceEntity, RoleEntity, UserEntity } from './entities';
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
-        entities: [UserEntity, RoleEntity, DeviceEntity],
+        entities: [
+          UserEntity,
+          RoleEntity,
+          DeviceEntity,
+          TemplateEntity,
+          ApprovalTypeEntity,
+        ],
         synchronize: true,
       }),
     }),

@@ -23,6 +23,7 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.userRepository.findOne({
       where: [{ email: loginDto.username }, { phone: loginDto.username }],
+      relations: ['role'],
     });
 
     if (!user) {
@@ -43,7 +44,7 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       name: user.name,
-      roleId: user.roleId,
+      roleId: user.role.id,
     };
 
     return await this.GenerateTokenService(payload);
@@ -65,7 +66,7 @@ export class AuthService {
     await this.userRepository.save({
       ...registerDto,
       password: hashedPassword,
-      roleId: 2,
+      role: { id: 2 },
     });
 
     throw new HttpException('User registered successfully', HttpStatus.CREATED);
@@ -80,6 +81,7 @@ export class AuthService {
 
       const user = await this.userRepository.findOne({
         where: { email: verifiedToken.email, refreshToken },
+        relations: ['role'],
       });
 
       if (user) {
@@ -88,7 +90,7 @@ export class AuthService {
           email: user.email,
           phone: user.phone,
           name: user.name,
-          roleId: user.roleId,
+          roleId: user.role.id,
         };
 
         return await this.GenerateTokenService(payload);
@@ -104,7 +106,10 @@ export class AuthService {
   }
 
   async forgetPasswordService(email: string) {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['role'],
+    });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -114,7 +119,7 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       name: user.name,
-      roleId: user.roleId,
+      roleId: user.role.id,
     };
 
     const resetToken = await this.jwtservice.signAsync(payload, {

@@ -11,7 +11,7 @@ export default class UserSeeder implements Seeder {
       phone: process.env.ADMIN_PHONE,
       email: process.env.ADMIN_EMAIL,
       password: await bcrypt.hash(process.env.ADMIN_PASSWORD || '', 10),
-      roleId: ROLE.ADMIN,
+      role: { id: ROLE.ADMIN },
     });
     console.log('>>> USER SEED');
   }

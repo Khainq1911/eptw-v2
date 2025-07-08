@@ -3,7 +3,7 @@ import { SeederOptions } from 'typeorm-extension';
 
 const options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
-  host: 'database',
+  host: 'localhost',
   port: 5432,
   username: 'postgres',
   password: 'postgres',
