@@ -8,9 +8,9 @@ const options: DataSourceOptions & SeederOptions = {
   username: 'postgres',
   password: 'postgres',
   database: 'eptw_v2',
-  entities: ['src/database/entities/index.ts'],
+  entities: ['src/database/entities/*.{ts,js}'],
   migrations: ['./src/database/migrations/*.{ts,js}'],
-  seeds: [__dirname + '/seeders/*.{ts,js}'],
+  seeds: ['src/database/seeders/*.{ts,js}'],
 };
 
 const AppDataSource = new DataSource(options);
