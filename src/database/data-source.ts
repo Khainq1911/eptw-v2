@@ -1,15 +1,15 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
-
+import 'dotenv/config';
 const options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
-  host: 'localhost',
+  host: process.env.POSTGRES_HOST,
   port: 5432,
-  username: 'postgres',
-  password: 'postgres',
-  database: 'eptw_v2',
+  username: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  database: process.env.POSTGRES_DB,
   entities: ['src/database/entities/*.{ts,js}'],
-  migrations: ['./src/database/migrations/*.{ts,js}'],
+  migrations: ['src/database/migrations/*.{ts,js}'],
   seeds: ['src/database/seeders/*.{ts,js}'],
 };
 

@@ -26,9 +26,15 @@ export class DeviceService {
   }
 
   async list() {
-    const [devices, number] = await this.deviceRepository.findAndCount();
+    const [devices, number] = await this.deviceRepository.findAndCount({
+      order: { updated_at: 'DESC' },
+    });
 
     return { devices, count: number };
+  }
+
+  public async getDeviceById(id: number) {
+    return await this.deviceRepository.findOne({ where: { id: id } });
   }
 
   async update(device: DeviceDto, id: number): Promise<{ message: string }> {
@@ -59,7 +65,7 @@ export class DeviceService {
       throw new HttpException('Device not found', 404);
     }
 
-    await this.deviceRepository.delete(id);
+    await this.deviceRepository.update(id, { status: 'delete' });
 
     return { message: 'Device deleted successfully' };
   }

@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -11,6 +13,7 @@ import { DeviceService } from './device.service';
 import type { DeviceDto } from './device.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { ROLE } from '@/common/enum';
+import { get } from 'http';
 
 @Controller('device')
 export class DeviceController {
@@ -21,6 +24,11 @@ export class DeviceController {
     return await this.deviceService.list();
   }
 
+  @Get(':id')
+  public async getDeviceById(@Param('id') id: number) {
+    return await this.deviceService.getDeviceById(id);
+  }
+
   @Roles(ROLE.ADMIN)
   @Post('create')
   async create(@Body() deviceDto: DeviceDto) {
@@ -28,14 +36,14 @@ export class DeviceController {
   }
 
   @Roles(ROLE.ADMIN)
-  @Put('update')
-  async update(@Body() deviceDto: DeviceDto, @Query('id') id: number) {
+  @Post('update/:id')
+  async update(@Body() deviceDto: DeviceDto, @Param('id') id: number) {
     return await this.deviceService.update(deviceDto, id);
   }
 
   @Roles(ROLE.ADMIN)
-  @Delete('delete')
-  async delete(@Query('id') id: number) {
+  @Patch('delete/:id')
+  async delete(@Param('id') id: number) {
     return await this.deviceService.delete(id);
   }
 }
