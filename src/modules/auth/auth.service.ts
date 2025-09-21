@@ -162,7 +162,7 @@ export class AuthService {
         );
       }
 
-      if (payload.iat * 1000 < new Date(user.updated_at).getTime()) {
+      if (payload.iat * 1000 < new Date(user.updatedAt).getTime()) {
         throw new HttpException(
           'Token has already been used',
           HttpStatus.FORBIDDEN,
@@ -173,7 +173,7 @@ export class AuthService {
 
       await this.userRepository.update(user.id, {
         password: hashedPassword,
-        updated_at: new Date(),
+        updatedAt: new Date(),
       });
 
       return { message: 'Password reset successfully' };

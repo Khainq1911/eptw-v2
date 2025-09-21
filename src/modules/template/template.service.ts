@@ -82,7 +82,7 @@ export class TemplateService {
       take: query.limit,
       withDeleted: false,
       order: {
-        created_at: query.sort,
+        createdAt: query.sort,
       },
       relations: ['approvalType', 'createdBy', 'updatedBy'],
     });

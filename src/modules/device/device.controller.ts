@@ -10,7 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { DeviceService } from './device.service';
-import type { DeviceDto } from './device.dto';
+import type { DeviceDto, FilterDto } from './device.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { ROLE } from '@/common/enum';
 import { get } from 'http';
@@ -19,9 +19,9 @@ import { get } from 'http';
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
-  @Get('list')
-  async list() {
-    return await this.deviceService.list();
+  @Post('list')
+  async list(@Body() filter: FilterDto) {
+    return await this.deviceService.list(filter);
   }
 
   @Get(':id')

@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 import 'dotenv/config';
+import { DeviceEntity } from './entities';
 const options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
   host: process.env.POSTGRES_HOST,
@@ -8,7 +9,7 @@ const options: DataSourceOptions & SeederOptions = {
   username: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
-  entities: ['src/database/entities/*.{ts,js}'],
+  entities: [DeviceEntity],
   migrations: ['src/database/migrations/*.{ts,js}'],
   seeds: ['src/database/seeders/*.{ts,js}'],
 };

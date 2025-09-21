@@ -2,7 +2,8 @@ import { DeviceEntity } from '@/database/entities/device.entity';
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import { DeviceDto } from './device.dto';
+import { CreateDeviceDto, DeviceDto, FilterDto } from './device.dto';
+import AppDataSource from '@/database/data-source';
 
 @Injectable()
 export class DeviceService {
@@ -11,7 +12,7 @@ export class DeviceService {
     private readonly deviceRepository: Repository<DeviceEntity>,
   ) {}
 
-  async create(device: DeviceDto): Promise<{ message: string }> {
+  async create(device: CreateDeviceDto): Promise<{ message: string }> {
     const existingDevice = await this.deviceRepository.findOne({
       where: { code: device.code },
     });
@@ -20,17 +21,53 @@ export class DeviceService {
       throw new HttpException('Device with this code already exists', 400);
     }
 
-    await this.deviceRepository.save(device);
+    await this.deviceRepository.save({ ...device, isUsed: false });
 
     return { message: 'Device created successfully' };
   }
 
-  async list() {
-    const [devices, number] = await this.deviceRepository.findAndCount({
-      order: { updated_at: 'DESC' },
+  async list(filter: FilterDto) {
+    const countActiveDevice = await this.deviceRepository.count({
+      where: { status: 'active' },
     });
 
-    return { devices, count: number };
+    const countInactiveDevice = await this.deviceRepository.count({
+      where: { status: 'maintain' },
+    });
+
+    const countIsUsedDevice = await this.deviceRepository.count({
+      where: { isUsed: true },
+    });
+
+    const qb = AppDataSource.getRepository(DeviceEntity)
+      .createQueryBuilder('device')
+      .orderBy('device.updatedAt', 'DESC')
+      .limit(filter.limit)
+      .offset((filter.page - 1) * filter.limit);
+
+    if (filter.query) {
+      qb.andWhere('(device.name = :query OR device.code = :query)', {
+        query: filter.query,
+      });
+    }
+
+    if (filter.status) {
+      qb.andWhere('device.status = :status', { status: filter.status });
+    }
+
+    if (filter.isUsed !== undefined) {
+      qb.andWhere('device.isUsed = :isUsed', { isUsed: filter.isUsed });
+    }
+
+    const [devices, number] = await qb.getManyAndCount();
+
+    return {
+      devices,
+      countAll: number,
+      countActiveDevice,
+      countInactiveDevice,
+      countIsUsedDevice,
+    };
   }
 
   public async getDeviceById(id: number) {
