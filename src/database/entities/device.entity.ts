@@ -9,6 +9,9 @@ export class DeviceEntity extends BaseEntity {
   @Column({ name: 'code', unique: true, nullable: false })
   code: string;
 
+  @Column({ name: 'is_used', nullable: false, type: 'boolean' })
+  isUsed: boolean;
+  
   @Column({ name: 'description', nullable: true })
   description: string;
 
