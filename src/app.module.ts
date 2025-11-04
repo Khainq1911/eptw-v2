@@ -9,6 +9,10 @@ import 'dotenv/config';
 import { DeviceModule } from './modules/device/device.module';
 import { ExcelModule } from './modules/excel/excel.module';
 import { TemplateModule } from './modules/template/template.module';
+import { ApprovalTypeModule } from './modules/approval-type/approval-type.module';
+import { TemplateTypeService } from './modules/template-type/template-type.service';
+import { RoleModule } from './modules/role/role.module';
+import { TemplateTypeModule } from './modules/template-type/template-type.module';
 
 @Module({
   imports: [
@@ -21,7 +25,10 @@ import { TemplateModule } from './modules/template/template.module';
     MailModule,
     DeviceModule,
     ExcelModule,
-    TemplateModule
+    TemplateModule,
+    ApprovalTypeModule,
+    TemplateTypeModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
