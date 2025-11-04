@@ -9,6 +9,7 @@ import {
 import { BaseEntity } from './base.entity';
 import { ApprovalTypeEntity } from './approval-type.entity';
 import { UserEntity } from './user.entities';
+import { TemplateTypeEntity } from './template-type.entity';
 
 @Entity({ name: 'template' })
 export class TemplateEntity extends BaseEntity {
@@ -24,6 +25,10 @@ export class TemplateEntity extends BaseEntity {
   @ManyToOne(() => ApprovalTypeEntity)
   @JoinColumn({ name: 'approval_type_id' })
   approvalType: ApprovalTypeEntity;
+
+  @ManyToOne(() => TemplateTypeEntity)
+  @JoinColumn({ name: 'template_type_id' })
+  templateType: TemplateTypeEntity;
 
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'created_id' })

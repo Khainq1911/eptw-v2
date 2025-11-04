@@ -8,6 +8,7 @@ import {
   TemplateEntity,
   UserEntity,
 } from './entities';
+import { TemplateTypeEntity } from './entities/template-type.entity';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import {
           DeviceEntity,
           TemplateEntity,
           ApprovalTypeEntity,
+          TemplateTypeEntity,
         ],
         synchronize: true,
       }),
