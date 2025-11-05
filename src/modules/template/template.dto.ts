@@ -4,13 +4,17 @@ export class TemplateDto {
   @IsString()
   name: string;
 
+  @IsOptional()
   @IsString()
   description: string;
 
   @IsNumber()
   approvalTypeId: number;
 
-  fields: any;
+  @IsNumber()
+  templateTypeId: number;
+
+  sections: any;
 }
 
 export class UpdateTemplateDto {
@@ -26,5 +30,5 @@ export class UpdateTemplateDto {
   @IsNumber()
   approvalTypeId: number;
 
-  fields: any;
+  sections: any;
 }

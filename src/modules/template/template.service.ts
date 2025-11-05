@@ -17,13 +17,24 @@ export class TemplateService {
     user: UserJwtPayloadDto,
     body: TemplateDto,
   ): Promise<{ message: string }> {
-    await this.templateRepository.save({
-      ...body,
-      approvalType: { id: body.approvalTypeId },
-      createdBy: { id: user.id },
-      updatedBy: { id: user.id },
-    });
-    return { message: 'success' };
+    this.validateCreate(body);
+
+    try {
+      await this.templateRepository.save({
+        ...body,
+        approvalType: { id: body.approvalTypeId },
+        templateType: { id: body.templateTypeId },
+        createdBy: { id: user.id },
+        updatedBy: { id: user.id },
+      });
+
+      return { message: 'success' };
+    } catch (error) {
+      throw new HttpException(
+        'Failed to create template: ' + (error.message || ''),
+        500,
+      );
+    }
   }
 
   async update(id: number, user: UserJwtPayloadDto, body: UpdateTemplateDto) {
@@ -91,5 +102,38 @@ export class TemplateService {
       data: templates,
       total: count,
     };
+  }
+
+  private validateCreate(body: TemplateDto) {
+    const errors: string[] = [];
+
+    if (!body.name) {
+      errors.push('Tên mẫu là bắt buộc');
+    }
+
+    if (!body.templateTypeId) {
+      errors.push('Loại mẫu là bắt buộc');
+    }
+
+    if (!body.approvalTypeId) {
+      errors.push('Loại phê duyệt là bắt buộc');
+    }
+
+    if (!body.sections || body.sections.length === 0) {
+      errors.push('Danh sách phần (section) là bắt buộc');
+    } else {
+      body.sections.forEach((section, index) => {
+        if (!section.name) {
+          errors.push(`Phần ${index + 1}: Tên phần là bắt buộc`);
+        }
+        if (section.sign?.required && !section.sign.roleIdAllowed) {
+          errors.push(`Phần ${index + 1}: Vai trò phê duyệt là bắt buộc`);
+        }
+      });
+    }
+
+    if (errors.length > 0) {
+      throw new HttpException(errors.join('; '), 400);
+    }
   }
 }
