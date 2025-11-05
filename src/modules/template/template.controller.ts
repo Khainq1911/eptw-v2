@@ -12,13 +12,13 @@ export class TemplateController {
   constructor(private readonly templateService: TemplateService) {}
 
   @Roles(ROLE.ADMIN)
-  @Post('create')
+  @Post('')
   async create(@User() user: UserJwtPayloadDto, @Body() body: TemplateDto) {
     return await this.templateService.create(user, body);
   }
 
   @Roles(ROLE.ADMIN)
-  @Put('update/:id')
+  @Put('/:id')
   async update(
     @User() user: UserJwtPayloadDto,
     @Param('id') id: number,
@@ -33,7 +33,7 @@ export class TemplateController {
     return await this.templateService.delete(id, user);
   }
 
-  @Get('list')
+  @Get('')
   async list(@Query() query: QueryDto) {
     return await this.templateService.list(query);
   }
