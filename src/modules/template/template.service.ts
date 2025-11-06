@@ -1,10 +1,11 @@
 import { TemplateEntity } from '@/database/entities';
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, IsNull, Not, Repository } from 'typeorm';
 import { UserJwtPayloadDto } from '../auth/auth.dto';
 import { TemplateDto, UpdateTemplateDto } from './template.dto';
 import { QueryDto } from '@/common/constants';
+import { isNull } from 'util';
 
 @Injectable()
 export class TemplateService {
@@ -83,24 +84,36 @@ export class TemplateService {
   }
 
   async list(query: QueryDto) {
-    const whereCondition = query.search
+    let whereCondition = query.search
       ? { name: ILike(`%${query.search}%`) }
       : {};
+
+    if (query.templateTypeId) {
+      whereCondition['templateType'] = { id: query.templateTypeId };
+    }
+    if (query.status === 'inactive') {
+      whereCondition['deletedAt'] = Not(IsNull());
+    } else if (query.status === 'active') {
+      whereCondition['deletedAt'] = IsNull();
+    }
 
     const [templates, count] = await this.templateRepository.findAndCount({
       where: whereCondition,
       skip: (query.page - 1) * query.limit || 0,
       take: query.limit,
-      withDeleted: false,
+      withDeleted: true,
       order: {
         createdAt: query.sort,
       },
-      relations: ['approvalType', 'createdBy', 'updatedBy'],
+      relations: ['approvalType', 'templateType', 'createdBy', 'updatedBy'],
     });
+
+    const totalCount = await this.templateRepository.count();
 
     return {
       data: templates,
-      total: count,
+      count: count,
+      total: totalCount,
     };
   }
 

@@ -33,8 +33,8 @@ export class TemplateController {
     return await this.templateService.delete(id, user);
   }
 
-  @Get('')
-  async list(@Query() query: QueryDto) {
+  @Post('list')
+  async list(@Body() query: QueryDto) {
     return await this.templateService.list(query);
   }
 }
