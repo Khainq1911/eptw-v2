@@ -18,7 +18,6 @@ export class TemplateDto {
 }
 
 export class UpdateTemplateDto {
-  @IsOptional()
   @IsString()
   name: string;
 
@@ -26,9 +25,11 @@ export class UpdateTemplateDto {
   @IsString()
   description: string;
 
-  @IsOptional()
   @IsNumber()
   approvalTypeId: number;
+
+  @IsNumber()
+  templateTypeId: number;
 
   sections: any;
 }
