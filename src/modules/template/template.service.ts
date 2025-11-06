@@ -39,6 +39,8 @@ export class TemplateService {
   }
 
   async update(id: number, user: UserJwtPayloadDto, body: UpdateTemplateDto) {
+    this.validateCreate(body);
+
     const template = await this.templateRepository.findOne({
       where: { id },
       relations: ['approvalType', 'createdBy', 'updatedBy'],
@@ -50,14 +52,15 @@ export class TemplateService {
 
     let payload;
 
-    const { approvalTypeId, ...rest } = body;
+    const { approvalTypeId, templateTypeId, ...rest } = body;
+
     payload = {
       ...rest,
       updatedBy: { id: user.id },
     };
-    if (body.approvalTypeId) {
-      payload.approvalType = { id: body.approvalTypeId };
-    }
+
+    payload.approvalType = { id: body.approvalTypeId };
+    payload.templateType = { id: body.templateTypeId };
 
     await this.templateRepository.update(id, payload);
 
@@ -115,6 +118,19 @@ export class TemplateService {
       count: count,
       total: totalCount,
     };
+  }
+
+  async findOne(id: number) {
+    const data = this.templateRepository.findOne({
+      where: { id },
+      relations: ['approvalType', 'templateType'],
+    });
+
+    if (!data) {
+      throw new HttpException('Template not found', 404);
+    }
+
+    return data;
   }
 
   private validateCreate(body: TemplateDto) {

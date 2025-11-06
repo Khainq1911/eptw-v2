@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { TemplateService } from './template.service';
 import { User } from '@/common/decorators/user.decorator';
 import { TemplateDto, UpdateTemplateDto } from './template.dto';
@@ -28,7 +37,7 @@ export class TemplateController {
   }
 
   @Roles(ROLE.ADMIN)
-  @Put('delete/:id')
+  @Patch('delete/:id')
   async delete(@User() user: UserJwtPayloadDto, @Param('id') id: number) {
     return await this.templateService.delete(id, user);
   }
@@ -36,5 +45,10 @@ export class TemplateController {
   @Post('list')
   async list(@Body() query: QueryDto) {
     return await this.templateService.list(query);
+  }
+
+  @Get('/:id')
+  async findOne(@Param('id') id: number) {
+    return await this.templateService.findOne(id);
   }
 }
