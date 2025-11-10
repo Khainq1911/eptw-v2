@@ -13,6 +13,9 @@ import { ApprovalTypeModule } from './modules/approval-type/approval-type.module
 import { TemplateTypeService } from './modules/template-type/template-type.service';
 import { RoleModule } from './modules/role/role.module';
 import { TemplateTypeModule } from './modules/template-type/template-type.module';
+import { WorkActivityEntity } from './database/entities/work-activity.entity';
+import { WorkActivityModule } from './modules/work-activity/work-activity.module';
+import { PermitModule } from './modules/permit/permit.module';
 
 @Module({
   imports: [
@@ -29,6 +32,8 @@ import { TemplateTypeModule } from './modules/template-type/template-type.module
     ApprovalTypeModule,
     TemplateTypeModule,
     RoleModule,
+    WorkActivityModule,
+    PermitModule
   ],
   controllers: [AppController],
   providers: [AppService],
