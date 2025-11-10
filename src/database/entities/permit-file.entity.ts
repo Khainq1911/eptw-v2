@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { PermitEntity } from './permit.entity';
 
-@Entity()
+@Entity({name:"permit_file"})
 export class PermitFileEntity {
   @PrimaryGeneratedColumn()
   id: number;

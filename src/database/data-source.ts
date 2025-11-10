@@ -9,7 +9,7 @@ const options: DataSourceOptions & SeederOptions = {
   username: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
-  entities: [DeviceEntity],
+  entities: ['src/database/entities/*.entity.{ts,js}'],
   migrations: ['src/database/migrations/*.{ts,js}'],
   seeds: ['src/database/seeders/*.{ts,js}'],
 };

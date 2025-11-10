@@ -1,8 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import {  PermitEntity } from './permit.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+} from 'typeorm';
+import { PermitEntity } from './permit.entity';
 import { UserEntity } from './user.entities';
 
-@Entity()
+@Entity({ name: 'permit_approval' })
 export class PermitApprovalEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -22,9 +28,13 @@ export class PermitApprovalEntity {
   @ManyToOne(() => UserEntity)
   approval: UserEntity;
 
-  @ManyToOne(() => PermitEntity, permit => permit.approvals)
+  @ManyToOne(() => PermitEntity, (permit) => permit.approvals)
   permit: PermitEntity;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 }

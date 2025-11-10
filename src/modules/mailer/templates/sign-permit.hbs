@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yêu cầu ký Permit</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      background-color: #fff;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    p {
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .highlight {
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: #fff !important;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+
+    .button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Yêu cầu ký Permit</h2>
+    <p>Xin chào <span class="highlight">{{signerName}}</span>,</p>
+    <p><span class="highlight">{{creatorName}}</span> đã tạo một permit mới: <span class="highlight">{{permitName}}</span> và yêu cầu bạn ký.</p>
+    <p>Ngày tạo: {{createdTime}}</p>
+    <p>Để xem chi tiết và ký permit, vui lòng nhấn nút bên dưới:</p>
+    <a href="{{permitLink}}" class="button">Xem và Ký Permit</a>
+  </div>
+</body>
+</html>

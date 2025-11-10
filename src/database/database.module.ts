@@ -9,6 +9,10 @@ import {
   UserEntity,
 } from './entities';
 import { TemplateTypeEntity } from './entities/template-type.entity';
+import { PermitEntity } from './entities/permit.entity';
+import { PermitFileEntity } from './entities/permit-file.entity';
+import { PermitApprovalEntity } from './entities/permit-approval.entity';
+import { WorkActivityEntity } from './entities/work-activity.entity';
 
 @Module({
   imports: [
@@ -29,6 +33,10 @@ import { TemplateTypeEntity } from './entities/template-type.entity';
           TemplateEntity,
           ApprovalTypeEntity,
           TemplateTypeEntity,
+          PermitEntity,
+          PermitFileEntity,
+          PermitApprovalEntity,
+          WorkActivityEntity
         ],
         synchronize: true,
       }),
