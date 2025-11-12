@@ -13,7 +13,7 @@ export class WorkActivityEntity extends BaseEntity {
   @Column({ nullable: true })
   category: string;
 
-  @Column({ nullable: true })
+  @Column({name:"risk_level", nullable: true })
   riskLevel: string;
 
   @ManyToMany(() => PermitEntity, (permit) => permit.workActivities)

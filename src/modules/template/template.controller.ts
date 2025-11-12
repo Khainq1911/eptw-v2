@@ -51,4 +51,9 @@ export class TemplateController {
   async findOne(@Param('id') id: number) {
     return await this.templateService.findOne(id);
   }
+
+  @Get('/data/ddl')
+  async getTemplateDdl() {
+    return await this.templateService.getTemplateDdl();
+  }
 }

@@ -1,15 +1,18 @@
 import { PermitEntity } from '@/database/entities/permit.entity';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { permitDto } from './permit.dto';
 import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
 import { DeviceEntity, UserEntity } from '@/database/entities';
 import { MailService } from '../mailer/mail.service';
 import { Exception } from 'handlebars';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class PermitService {
   constructor(
+    @InjectRepository(PermitEntity)
+    private readonly permitRepository: Repository<PermitEntity>,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {}
@@ -64,6 +67,19 @@ export class PermitService {
 
       return { message: 'Permit created successfully', permit };
     });
+  }
+
+  async getDetailPermit(id: number) {
+    const permit = await this.permitRepository.findOne({
+      where: { id },
+      relations: ['workActivities', 'devices', 'createdBy', 'template'],
+    });
+
+    if (!permit) {
+      throw new NotFoundException(`Permit with id ${id} not found`);
+    }
+
+    return permit;
   }
 
   private getRequiredSignerInfor(sections: any) {

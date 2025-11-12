@@ -16,6 +16,7 @@ import { TemplateTypeModule } from './modules/template-type/template-type.module
 import { WorkActivityEntity } from './database/entities/work-activity.entity';
 import { WorkActivityModule } from './modules/work-activity/work-activity.module';
 import { PermitModule } from './modules/permit/permit.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { PermitModule } from './modules/permit/permit.module';
     TemplateTypeModule,
     RoleModule,
     WorkActivityModule,
-    PermitModule
+    PermitModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
