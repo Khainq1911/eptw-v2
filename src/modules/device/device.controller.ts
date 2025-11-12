@@ -13,7 +13,6 @@ import { DeviceService } from './device.service';
 import type { DeviceDto, FilterDto } from './device.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { ROLE } from '@/common/enum';
-import { get } from 'http';
 
 @Controller('device')
 export class DeviceController {
@@ -24,6 +23,11 @@ export class DeviceController {
     return await this.deviceService.list(filter);
   }
 
+  @Get('/free-and-active')
+  async getFreeAndActiveDevices() {
+    return await this.deviceService.getFreeAndActiveDevices();
+  }
+  
   @Get(':id')
   public async getDeviceById(@Param('id') id: number) {
     return await this.deviceService.getDeviceById(id);

@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
   ManyToOne,
@@ -12,6 +13,7 @@ import { DeviceEntity } from './device.entity';
 import { UserEntity } from './user.entities';
 import { PermitFileEntity } from './permit-file.entity';
 import { PermitApprovalEntity } from './permit-approval.entity';
+import { TemplateEntity } from './template.entity';
 
 @Entity({ name: 'permit' })
 export class PermitEntity extends BaseEntity {
@@ -43,10 +45,16 @@ export class PermitEntity extends BaseEntity {
   sections: any;
 
   @ManyToOne(() => UserEntity)
+  @JoinColumn({ name: 'created_id' })
   createdBy: UserEntity;
 
   @ManyToOne(() => UserEntity)
+  @JoinColumn({ name: 'updated_id' })
   updatedBy: UserEntity;
+
+  @ManyToOne(() => TemplateEntity)
+  @JoinColumn({ name: 'template_id' })
+  template: TemplateEntity;
 
   @OneToMany(() => PermitFileEntity, (file) => file.permit)
   files: PermitFileEntity[];

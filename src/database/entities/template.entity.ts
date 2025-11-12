@@ -22,6 +22,12 @@ export class TemplateEntity extends BaseEntity {
   @Column({ name: 'sections', type: 'jsonb', nullable: true })
   sections: any;
 
+  @Column({ name: 'approval_type_id' })
+  approvalTypeId: number;
+
+  @Column({ name: 'template_type_id' })
+  templateTypeId: number;
+
   @ManyToOne(() => ApprovalTypeEntity)
   @JoinColumn({ name: 'approval_type_id' })
   approvalType: ApprovalTypeEntity;
@@ -42,6 +48,6 @@ export class TemplateEntity extends BaseEntity {
   @JoinColumn({ name: 'deleted_id' })
   deletedBy: UserEntity;
 
-  @DeleteDateColumn({name: 'deleted_at'})
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Timestamp;
 }

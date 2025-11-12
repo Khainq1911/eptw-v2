@@ -106,4 +106,10 @@ export class DeviceService {
 
     return { message: 'Device deleted successfully' };
   }
+
+  async getFreeAndActiveDevices() {
+    return await this.deviceRepository.find({
+      where: { status: 'active', isUsed: false },
+    });
+  }
 }

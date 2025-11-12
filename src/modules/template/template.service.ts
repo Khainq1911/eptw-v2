@@ -1,17 +1,18 @@
 import { TemplateEntity } from '@/database/entities';
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, IsNull, Not, Repository } from 'typeorm';
+import { DataSource, ILike, IsNull, Not, Repository } from 'typeorm';
 import { UserJwtPayloadDto } from '../auth/auth.dto';
 import { TemplateDto, UpdateTemplateDto } from './template.dto';
 import { QueryDto } from '@/common/constants';
-import { isNull } from 'util';
 
 @Injectable()
 export class TemplateService {
   constructor(
     @InjectRepository(TemplateEntity)
     private readonly templateRepository: Repository<TemplateEntity>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
@@ -164,5 +165,15 @@ export class TemplateService {
     if (errors.length > 0) {
       throw new HttpException(errors.join('; '), 400);
     }
+  }
+
+  async getTemplateDdl() {
+    return await this.dataSource
+      .getRepository(TemplateEntity)
+      .createQueryBuilder('template')
+      .select('template.id', 'id')
+      .addSelect('template.name', 'name')
+      .orderBy('template.name', 'ASC')
+      .getRawMany();
   }
 }
