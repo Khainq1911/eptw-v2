@@ -23,6 +23,11 @@ export class DeviceController {
     return await this.deviceService.list(filter);
   }
 
+  @Get("list-devices")
+  async listDevices() {
+    return await this.deviceService.listDevices();
+  }
+
   @Get('/free-and-active')
   async getFreeAndActiveDevices() {
     return await this.deviceService.getFreeAndActiveDevices();
