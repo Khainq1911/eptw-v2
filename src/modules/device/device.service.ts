@@ -112,4 +112,8 @@ export class DeviceService {
       where: { status: 'active', isUsed: false },
     });
   }
+
+  async listDevices() {
+    return await this.deviceRepository.find();
+  }
 }
