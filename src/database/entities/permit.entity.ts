@@ -14,6 +14,7 @@ import { UserEntity } from './user.entities';
 import { PermitFileEntity } from './permit-file.entity';
 import { PermitApprovalEntity } from './permit-approval.entity';
 import { TemplateEntity } from './template.entity';
+import { PermitSignEntity } from './permit-sign.entity';
 
 @Entity({ name: 'permit' })
 export class PermitEntity extends BaseEntity {
@@ -22,6 +23,9 @@ export class PermitEntity extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   description?: string;
+
+  @OneToMany(() => PermitSignEntity, (sign) => sign.permit)
+  sign: PermitSignEntity[];
 
   @Column({ name: 'people_number', type: 'int' })
   peopleNumber: number;

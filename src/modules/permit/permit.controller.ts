@@ -13,12 +13,17 @@ export class PermitController {
   }
 
   @Post('list')
-  async getListPermit(@Body() payload: filterDto) {
-    return await this.permitService.getListPermit(payload);
+  async getListPermit(@Body() payload: filterDto, @User() user: any) {
+    return await this.permitService.getListPermit(payload, user);
   }
 
   @Get(':id')
   async getDetailPermit(@Param('id') id: number) {
     return await this.permitService.getDetailPermit(id);
+  }
+
+  @Post('delete/:id')
+  async deletePermit(@Param('id') id: number) {
+    return await this.permitService.deletePermit(id);
   }
 }

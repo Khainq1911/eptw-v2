@@ -1,0 +1,98 @@
+import {
+  S3Client,
+  ListBucketsCommand,
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
+
+@Injectable()
+export class S3ClientService {
+  private readonly s3Client: S3Client;
+  private readonly attachmentFileBucketName: string;
+  private readonly signBucketName: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.attachmentFileBucketName = this.configService.getOrThrow(
+      'AWS_S3_ATTACHMENT_FILE_BUCKET_NAME',
+    );
+    this.signBucketName = this.configService.getOrThrow(
+      'AWS_S3_SIGN_BUCKET_NAME',
+    );
+
+    this.s3Client = new S3Client({
+      region: this.configService.getOrThrow('AWS_S3_REGION'),
+      endpoint: this.configService.getOrThrow('AWS_S3_ENDPOINT'),
+      credentials: {
+        accessKeyId: this.configService.getOrThrow('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow('AWS_SECRET_ACCESS_KEY'),
+      },
+      forcePathStyle: true,
+    });
+
+    this.initBuckets();
+  }
+
+  private async initBuckets() {
+    try {
+      await this.s3Client.send(new ListBucketsCommand({}));
+      console.log('✅ S3 client connected successfully');
+
+      await this.ensureBucket(this.attachmentFileBucketName);
+      await this.ensureBucket(this.signBucketName);
+    } catch (error) {
+      console.error('❌ S3 client connection failed:', error);
+    }
+  }
+
+  private async ensureBucket(bucketName: string) {
+    try {
+      await this.s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
+      console.log(`✅ Bucket "${bucketName}" already exists`);
+    } catch (err) {
+      console.log(`⚠ Bucket "${bucketName}" does not exist. Creating...`);
+      await this.s3Client.send(new CreateBucketCommand({ Bucket: bucketName }));
+      console.log(`✅ Bucket "${bucketName}" created successfully`);
+    }
+  }
+
+  public async uploadFile(file: Express.Multer.File, bucketName: string) {
+    const fileKey = `${uuidv4()}-${file.originalname}`;
+    console.log(file);
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: fileKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        }),
+      );
+
+      const baseUrl = this.configService.getOrThrow('AWS_S3_ENDPOINT');
+      const fileUrl = `${baseUrl}/${bucketName}/${fileKey}`;
+      return {
+        key: fileKey,
+        url: fileUrl,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bucket: bucketName,
+      };
+    } catch (error) {
+      console.error('Upload failed:', error);
+      throw new InternalServerErrorException('Upload file failed');
+    }
+  }
+
+  public async uploadFiles(files: Express.Multer.File[], bucketName: string) {
+    const results = await Promise.all(
+      files.map((file) => this.uploadFile(file, bucketName)),
+    );
+
+    return results;
+  }
+}

@@ -8,3 +8,12 @@ export class QueryDto {
   search: string = '';
   sort: FindOptionsOrderValue = 'ASC';
 }
+
+export class PERMIT_STATUS {
+    static readonly PENDING = 'Pending';
+    static readonly APPROVED = 'Approved';
+    static readonly REJECTED = 'Rejected';
+    static readonly EXPIRED = 'Expired';
+    static readonly CANCELLED = 'Cancelled';
+    static readonly CLOSED = 'Closed';
+}
