@@ -13,6 +13,7 @@ import { PermitEntity } from './entities/permit.entity';
 import { PermitFileEntity } from './entities/permit-file.entity';
 import { PermitApprovalEntity } from './entities/permit-approval.entity';
 import { WorkActivityEntity } from './entities/work-activity.entity';
+import { PermitSignEntity } from './entities/permit-sign.entity';
 const options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
   host: process.env.POSTGRES_HOST,
@@ -31,6 +32,7 @@ const options: DataSourceOptions & SeederOptions = {
     PermitFileEntity,
     PermitApprovalEntity,
     WorkActivityEntity,
+    PermitSignEntity,
   ],
   migrations: ['src/database/migrations/*.{ts,js}'],
   seeds: ['src/database/seeders/*.{ts,js}'],

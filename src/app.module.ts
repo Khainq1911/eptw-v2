@@ -17,6 +17,7 @@ import { WorkActivityEntity } from './database/entities/work-activity.entity';
 import { WorkActivityModule } from './modules/work-activity/work-activity.module';
 import { PermitModule } from './modules/permit/permit.module';
 import { UserModule } from './modules/user/user.module';
+import { S3Module } from './modules/s3-client/s3-client.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UserModule } from './modules/user/user.module';
     WorkActivityModule,
     PermitModule,
     UserModule,
+    S3Module,
   ],
   controllers: [AppController],
   providers: [AppService],

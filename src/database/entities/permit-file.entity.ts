@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { PermitEntity } from './permit.entity';
 
@@ -12,28 +13,27 @@ export class PermitFileEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => PermitEntity, (permit) => permit.files, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => PermitEntity)
+  @JoinColumn({ name: 'permit_id' })
   permit: PermitEntity;
 
-  @Column({ name: 'file_name', length: 255 })
-  fileName: string;
+  @Column({ name: 'name', length: 255 })
+  name: string;
 
-  @Column({ name: 'file_type', length: 100, nullable: true })
-  fileType: string;
+  @Column({ name: 'type', length: 100, nullable: true })
+  type: string;
 
-  @Column({ name: 'file_size', type: 'bigint', nullable: true })
-  fileSize: number;
+  @Column({ name: 'size', type: 'bigint', nullable: true })
+  size: number;
 
-  @Column({ name: 'minio_bucket', length: 255 })
-  minioBucket: string;
+  @Column({ name: 'bucket', length: 255 })
+  bucket: string;
 
-  @Column({ name: 'minio_object_key', length: 512 })
-  minioObjectKey: string;
+  @Column({ name: 'object_key', length: 512 })
+  objectKey: string;
 
-  @Column({ name: 'file_url', type: 'text', nullable: true })
-  fileUrl: string;
+  @Column({ name: 'url', type: 'text', nullable: true })
+  url: string;
 
   @CreateDateColumn({
     name: 'created_at',

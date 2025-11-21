@@ -7,7 +7,9 @@ export class permitDto {
   startTime: Date;
   endTime: Date;
   status: string;
+  attachments?: any[];
   sections: any;
+  attachment;
   templateId: number;
   workActivityIds: number[];
   deviceIds: number[];
