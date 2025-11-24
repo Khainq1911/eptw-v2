@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { Brackets, DataSource, In, Repository } from 'typeorm';
 import { filterDto, permitDto, permitListForTableDto } from './permit.dto';
 import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
 import { DeviceEntity, UserEntity } from '@/database/entities';
@@ -132,7 +132,7 @@ export class PermitService {
   async getDetailPermit(id: number) {
     const permit = await this.permitRepository.findOne({
       where: { id },
-      relations: ['workActivities', 'devices', 'createdBy', 'template'],
+      relations: ['workActivities', 'devices', 'createdBy', 'template', 'sign'],
     });
 
     if (!permit) {
@@ -156,12 +156,17 @@ export class PermitService {
       .offset((filter.page - 1) * filter.limit)
       .limit(filter.limit);
 
-    query.andWhere('permit.created_id = :id', { id: user.id });
-    query.orWhere(
-      `permit.id in (SELECT ps.permit_id
-      FROM permit_sign ps
-      WHERE ps.signer_id = :signerId)`,
-      { signerId: user.id },
+    query.andWhere(
+      new Brackets((qb) => {
+        qb.where('permit.created_id = :id', { id: user.id }).orWhere(
+          `permit.id IN (
+              SELECT ps.permit_id
+              FROM permit_sign ps
+              WHERE ps.signer_id = :signerId
+          )`,
+          { signerId: user.id },
+        );
+      }),
     );
 
     if (filter.name)
@@ -200,10 +205,11 @@ export class PermitService {
       `,
         { workActivityId: filter.workActivities },
       );
-    if (filter.startTime)
+    if (filter.startTime) {
       query.andWhere('permit.startTime >= :startTime', {
         startTime: filter.startTime,
       });
+    }
     if (filter.endTime)
       query.andWhere('permit.endTime <= :endTime', {
         endTime: filter.endTime,
@@ -227,19 +233,46 @@ export class PermitService {
     }));
   }
 
-  public async deletePermit(id: number): Promise<{ message: string }> {
+  public async deletePermit(
+    id: number,
+    user: UserEntity,
+  ): Promise<{ message: string }> {
     return await this.dataSource.transaction(async (manager) => {
+      // 1. Load permit
       const permit = await manager.findOne(PermitEntity, {
         where: { id },
+        relations: ['workActivities', 'devices'],
       });
 
-      if (!permit)
+      if (!permit) {
         throw new NotFoundException(`Permit with id ${id} not found`);
+      }
 
-      if (permit.status !== PERMIT_STATUS.PENDING)
+      if (permit.status !== PERMIT_STATUS.PENDING) {
         throw new BadRequestException(`Permit with id ${id} is not pending`);
+      }
+
+      // 2. Handle devices
+      const deviceIds = permit.devices?.map((d) => d.id) || [];
+
+      if (deviceIds.length) {
+        const devices = await manager.find(DeviceEntity, {
+          where: { id: In(deviceIds) },
+        });
+
+        const updatedDevices = devices.map((d) =>
+          manager.create(DeviceEntity, {
+            ...d,
+            isUsed: false,
+            updatedBy: user.id,
+          }),
+        );
+
+        await manager.save(DeviceEntity, updatedDevices);
+      }
 
       permit.status = PERMIT_STATUS.CANCELLED;
+      permit.updatedBy = user;
       await manager.save(permit);
 
       return { message: 'Permit deleted successfully' };
