@@ -23,7 +23,7 @@ export class PermitController {
   }
 
   @Post('delete/:id')
-  async deletePermit(@Param('id') id: number) {
-    return await this.permitService.deletePermit(id);
+  async deletePermit(@Param('id') id: number, @User() user: any) {
+    return await this.permitService.deletePermit(id, user);
   }
 }
