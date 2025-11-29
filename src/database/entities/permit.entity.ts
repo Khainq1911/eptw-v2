@@ -61,7 +61,7 @@ export class PermitEntity extends BaseEntity {
   template: TemplateEntity;
 
   @OneToMany(() => PermitFileEntity, (file) => file.permit)
-  files: PermitFileEntity[];
+  attachments: PermitFileEntity[];
 
   @OneToMany(() => PermitApprovalEntity, (approval) => approval.permit)
   approvals: PermitApprovalEntity[];

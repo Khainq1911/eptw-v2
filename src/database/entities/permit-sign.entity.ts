@@ -23,22 +23,29 @@ export class PermitSignEntity {
   @JoinColumn({ name: 'permit_id' })
   permit: PermitEntity;
 
-  @Column()
-  section_id: number;
+  @Column({ name: 'section_id' })
+  sectionId: number;
 
-  @Column()
-  signer_id: number;
+  @Column({ name: 'signer_id' })
+  signerId: number;
+
+  @Column({ name: 'sign_url', type: 'text', nullable: true })
+  signUrl: string;
 
   @OneToOne(() => UserEntity)
   @JoinColumn({ name: 'signer_id' })
   signer: UserEntity;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ name: 'status', type: 'varchar', length: 50, nullable: true })
   status: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'NOW()' })
-  signed_at: Date;
+  @CreateDateColumn({ name: 'signed_at', type: 'timestamp', nullable: true })
+  signedAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'NOW()' })
-  updated_at: Date;
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'NOW()',
+  })
+  updatedAt: Date;
 }

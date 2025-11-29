@@ -12,6 +12,16 @@ export class PermitController {
     return await this.permitService.create(payload, user);
   }
 
+  @Post('send-otp')
+  async sendOtp(@User() user: any) {
+    return await this.permitService.sendOtp(user);
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(@Body() payload: any, @User() user: any) {
+    return await this.permitService.signSection(payload, user);
+  }
+
   @Post('list')
   async getListPermit(@Body() payload: filterDto, @User() user: any) {
     return await this.permitService.getListPermit(payload, user);

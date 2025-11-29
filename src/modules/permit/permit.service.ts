@@ -10,11 +10,12 @@ import { filterDto, permitDto, permitListForTableDto } from './permit.dto';
 import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
 import { DeviceEntity, UserEntity } from '@/database/entities';
 import { MailService } from '../mailer/mail.service';
-import { Exception } from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PermitFileEntity } from '@/database/entities/permit-file.entity';
 import { PermitSignEntity } from '@/database/entities/permit-sign.entity';
 import { PERMIT_STATUS } from '@/common/constants';
+import { TemplateService } from '../template/template.service';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class PermitService {
@@ -23,6 +24,8 @@ export class PermitService {
     private readonly permitRepository: Repository<PermitEntity>,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
+    private readonly templateService: TemplateService,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(payload: permitDto, user: any) {
@@ -82,7 +85,6 @@ export class PermitService {
         await manager.save(PermitFileEntity, attachmentEntities);
       }
 
-      // 6. Save permit_sign
       const requiredSigners = this.getRequiredSignerInfor(payload.sections);
       if (requiredSigners.length) {
         const permitSignEntities = requiredSigners.map((signer) =>
@@ -95,7 +97,6 @@ export class PermitService {
         );
         await manager.save(PermitSignEntity, permitSignEntities);
 
-        // 7. Send emails to signers
         const signerIds = requiredSigners.map((s) => s.signId);
         const signUsers = await manager.find(UserEntity, {
           where: { id: In(signerIds) },
@@ -132,14 +133,31 @@ export class PermitService {
   async getDetailPermit(id: number) {
     const permit = await this.permitRepository.findOne({
       where: { id },
-      relations: ['workActivities', 'devices', 'createdBy', 'template', 'sign'],
+      relations: [
+        'workActivities',
+        'devices',
+        'createdBy',
+        'template',
+        'attachments',
+      ],
     });
 
     if (!permit) {
       throw new NotFoundException(`Permit with id ${id} not found`);
     }
 
-    return permit;
+    const signs = await this.dataSource.getRepository(PermitSignEntity).find({
+      where: { permit: { id } },
+      relations: ['signer'],
+    });
+
+    const template = await this.templateService.findOne(permit.template.id);
+
+    return {
+      ...permit,
+      template,
+      signs,
+    };
   }
 
   async getListPermit(
@@ -277,6 +295,78 @@ export class PermitService {
 
       return { message: 'Permit deleted successfully' };
     });
+  }
+
+  public async sendOtp(user: any): Promise<void> {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    await this.redisService.set(user.id.toString(), otp, 300000);
+
+    await this.mailService.sendMail({
+      email: user.email,
+      subject: 'Mã OTP Xác Minh Ký Tài Liệu',
+      template: 'otp-verify',
+      context: {
+        name: user.name,
+        otp: otp,
+      },
+    });
+  }
+
+  public async signSection(payload: any, user: any) {
+    return await this.dataSource.transaction(async (manager) => {
+      const sign = await manager.findOne(PermitSignEntity, {
+        where: {
+          permit: { id: payload.permitId },
+          sectionId: payload.sectionId,
+          signer: { id: user.id },
+        },
+      });
+
+      if (!sign) {
+        throw new NotFoundException('Phần ký không tồn tại');
+      }
+
+      if (sign.signedAt !== null) {
+        throw new BadRequestException('Bạn đã ký tài liệu này rồi');
+      }
+
+      const isOtpValid = await this.verifyOtp(payload.otp, user);
+      if (!isOtpValid) {
+        throw new BadRequestException('OTP không hợp lệ hoặc đã hết hạn');
+      }
+
+      const newSign = await manager.save(PermitSignEntity, {
+        ...sign,
+        status: 'Signed',
+        signedAt: new Date(),
+        updatedAt: new Date(),
+        signUrl: payload.signUrl,
+      });
+
+      await this.mailService.sendMail({
+        email: user.email,
+        subject: 'Ký tài liệu thành công',
+        template: 'sign-success',
+        context: {
+          time: new Date().toLocaleString(),
+          documentUrl: `http://localhost:5173/permit/view/${payload.permitId}`,
+        },
+      });
+
+      return newSign;
+    });
+  }
+
+  private async verifyOtp(otp: number, user: any): Promise<boolean> {
+    const storedOtp = await this.redisService.get(user.id.toString());
+    if (!storedOtp) return false;
+
+    const isValid = otp === Number(storedOtp);
+    if (isValid) {
+      await this.redisService.del(user.id.toString());
+    }
+    return isValid;
   }
 
   private getRequiredSignerInfor(sections: any) {
