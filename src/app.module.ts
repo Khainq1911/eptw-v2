@@ -18,6 +18,7 @@ import { WorkActivityModule } from './modules/work-activity/work-activity.module
 import { PermitModule } from './modules/permit/permit.module';
 import { UserModule } from './modules/user/user.module';
 import { S3Module } from './modules/s3-client/s3-client.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { S3Module } from './modules/s3-client/s3-client.module';
     PermitModule,
     UserModule,
     S3Module,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -4,12 +4,23 @@ import { PermitService } from './permit.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PermitEntity } from '@/database/entities/permit.entity';
 import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
-import { DeviceEntity } from '@/database/entities';
+import { DeviceEntity, TemplateEntity } from '@/database/entities';
 import { MailService } from '../mailer/mail.service';
+import { TemplateService } from '../template/template.service';
+import { RedisService } from '../redis/redis.service';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PermitEntity, WorkActivityEntity, DeviceEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      PermitEntity,
+      WorkActivityEntity,
+      DeviceEntity,
+      TemplateEntity,
+    ]),
+    RedisModule,
+  ],
   controllers: [PermitController],
-  providers: [PermitService, MailService],
+  providers: [PermitService, MailService, TemplateService],
 })
 export class PermitModule {}

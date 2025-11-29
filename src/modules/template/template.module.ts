@@ -8,5 +8,6 @@ import { TemplateEntity } from '@/database/entities';
   imports: [TypeOrmModule.forFeature([TemplateEntity])],
   controllers: [TemplateController],
   providers: [TemplateService],
+  exports: [TemplateService],
 })
 export class TemplateModule {}
