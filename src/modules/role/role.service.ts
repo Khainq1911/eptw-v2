@@ -12,4 +12,12 @@ export class RoleService {
   async getRoles() {
     return await this.roleRepository.find();
   }
+
+  public async getAdminRoleId() {
+    return await this.roleRepository.findOne({
+      where: {
+        alias: 'admin',
+      },
+    });
+  }
 }

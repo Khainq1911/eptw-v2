@@ -1,11 +1,13 @@
 import { PermitEntity } from '@/database/entities/permit.entity';
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Injectable,
+  NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
-import { Brackets, DataSource, In, Repository } from 'typeorm';
+import { Brackets, DataSource, In, Not, Repository } from 'typeorm';
 import { filterDto, permitDto, permitListForTableDto } from './permit.dto';
 import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
 import { DeviceEntity, UserEntity } from '@/database/entities';
@@ -16,6 +18,7 @@ import { PermitSignEntity } from '@/database/entities/permit-sign.entity';
 import { PERMIT_STATUS } from '@/common/constants';
 import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class PermitService {
@@ -26,6 +29,7 @@ export class PermitService {
     private readonly mailService: MailService,
     private readonly templateService: TemplateService,
     private readonly redisService: RedisService,
+    private readonly roleService: RoleService,
   ) {}
 
   async create(payload: permitDto, user: any) {
@@ -130,7 +134,7 @@ export class PermitService {
     });
   }
 
-  async getDetailPermit(id: number) {
+  async getDetailPermit(id: number, action: string, user: any): Promise<any> {
     const permit = await this.permitRepository.findOne({
       where: { id },
       relations: [
@@ -141,6 +145,18 @@ export class PermitService {
         'attachments',
       ],
     });
+
+    if (action === 'update') {
+      const adminRole = await this.roleService.getAdminRoleId();
+
+      const isAdmin = user.roleId === adminRole?.id;
+      console.log('isAdmin', isAdmin);
+      const isCreator = permit?.createdBy?.id === user.id;
+
+      if (!isAdmin && !isCreator) {
+        throw new ForbiddenException('Bạn không có quyền chỉnh sửa giấy phép');
+      }
+    }
 
     if (!permit) {
       throw new NotFoundException(`Permit with id ${id} not found`);
@@ -164,91 +180,141 @@ export class PermitService {
     filter: filterDto,
     user: any,
   ): Promise<permitListForTableDto[]> {
-    const query = this.dataSource
-      .getRepository(PermitEntity)
-      .createQueryBuilder('permit')
-      .leftJoinAndSelect('permit.workActivities', 'allWorkActivities')
-      .leftJoinAndSelect('permit.devices', 'devices')
-      .leftJoinAndSelect('permit.createdBy', 'createdBy')
-      .leftJoinAndSelect('permit.template', 'template')
-      .offset((filter.page - 1) * filter.limit)
-      .limit(filter.limit);
+    const adminRole = await this.roleService.getAdminRoleId();
 
-    query.andWhere(
-      new Brackets((qb) => {
-        qb.where('permit.created_id = :id', { id: user.id }).orWhere(
-          `permit.id IN (
+    // ----------------------------
+    // STEP 1: Query danh sách permit.id
+    // ----------------------------
+    let idQuery = this.dataSource
+      .createQueryBuilder()
+      .select('permit.id', 'id')
+      .from(PermitEntity, 'permit')
+      .leftJoin('permit.template', 'template')
+      .leftJoin('permit.createdBy', 'createdBy');
+
+    // 🔥 Phân quyền
+    if (user.roleId !== adminRole?.id) {
+      idQuery.andWhere(
+        new Brackets((qb) => {
+          qb.where('permit.created_id = :id', { id: user.id }).orWhere(
+            `
+            permit.id IN (
               SELECT ps.permit_id
               FROM permit_sign ps
               WHERE ps.signer_id = :signerId
-          )`,
-          { signerId: user.id },
-        );
-      }),
-    );
+            )
+          `,
+            { signerId: user.id },
+          );
+        }),
+      );
+    }
 
+    // 🔍 Filter
     if (filter.name)
-      query.andWhere('permit.name ilike :name', { name: `%${filter.name}%` });
+      idQuery.andWhere('permit.name ILIKE :name', { name: `%${filter.name}%` });
+
     if (filter.templateId)
-      query.andWhere('template.id = :templateId', {
+      idQuery.andWhere('template.id = :templateId', {
         templateId: filter.templateId,
       });
+
     if (filter.status)
-      query.andWhere('permit.status = :status', { status: filter.status });
+      idQuery.andWhere('permit.status = :status', { status: filter.status });
+
     if (filter.createdBy)
-      query.andWhere('createdBy.id = :createdBy', {
+      idQuery.andWhere('createdBy.id = :createdBy', {
         createdBy: filter.createdBy,
       });
-    if (filter.devices)
-      query.andWhere(
-        `
-        EXISTS (
-          SELECT 1
-          FROM permit_device pd
-          WHERE pd.permit_id = permit.id
-            AND pd.device_id = :deviceId
-        )
-      `,
-        { deviceId: filter.devices },
-      );
-    if (filter.workActivities)
-      query.andWhere(
-        `
-        EXISTS (
-          SELECT 1
-          FROM permit_work_activity pwa
-          WHERE pwa.permit_id = permit.id
-            AND pwa.work_activity_id = :workActivityId
-        )
-      `,
-        { workActivityId: filter.workActivities },
-      );
-    if (filter.startTime) {
-      query.andWhere('permit.startTime >= :startTime', {
+
+    if (filter.startTime)
+      idQuery.andWhere('permit.startTime >= :startTime', {
         startTime: filter.startTime,
       });
-    }
+
     if (filter.endTime)
-      query.andWhere('permit.endTime <= :endTime', {
+      idQuery.andWhere('permit.endTime <= :endTime', {
         endTime: filter.endTime,
       });
 
+    if (filter.devices) {
+      idQuery.andWhere(
+        `
+      EXISTS (
+        SELECT 1 FROM permit_device pd
+        WHERE pd.permit_id = permit.id
+          AND pd.device_id = :deviceId
+      )`,
+        { deviceId: filter.devices },
+      );
+    }
+
+    if (filter.workActivities) {
+      idQuery.andWhere(
+        `
+      EXISTS (
+        SELECT 1 FROM permit_work_activity pwa
+        WHERE pwa.permit_id = permit.id
+          AND pwa.work_activity_id = :workActivityId
+      )`,
+        { workActivityId: filter.workActivities },
+      );
+    }
+
+    // 🔥 Pagination CHUẨN
+    idQuery
+      .orderBy('permit.createdAt', 'DESC')
+      .offset((filter.page - 1) * filter.limit)
+      .limit(filter.limit);
+
+    const rawIds = await idQuery.getRawMany();
+    const ids = rawIds.map((i) => i.id);
+
+    if (ids.length === 0) return [];
+
+    // ----------------------------
+    // STEP 2: Query đầy đủ bằng danh sách id
+    // ----------------------------
+    const query = this.dataSource
+      .getRepository(PermitEntity)
+      .createQueryBuilder('permit')
+      .leftJoinAndSelect('permit.workActivities', 'workActivities')
+      .leftJoinAndSelect('permit.devices', 'devices')
+      .leftJoinAndSelect('permit.createdBy', 'createdBy')
+      .leftJoinAndSelect('permit.template', 'template')
+      .where('permit.id IN (:...ids)', { ids })
+      .orderBy('permit.createdAt', 'DESC');
+
     const listPermits = await query.getMany();
 
-    return listPermits.map((permit) => ({
-      id: permit.id,
-      name: permit.name,
-      templateName: permit.template.name,
-      devices: permit.devices.map((device) => device.name).join(', '),
-      workActivities: permit.workActivities
-        .map((workActivity) => workActivity.name)
-        .join(', '),
-      startTime: permit.startTime,
-      endTime: permit.endTime,
-      status: permit.status,
-      createdAt: permit.createdAt,
-      createdBy: permit.createdBy.name,
-    }));
+    // ----------------------------
+    // Format kết quả
+    // ----------------------------
+    return listPermits.map((permit) => {
+      const canEdit =
+        user.roleId === adminRole?.id ||
+        (permit.endTime >= new Date() && user.id === permit.createdBy.id);
+
+      const canDelete =
+        user.roleId === adminRole?.id ||
+        (user.id === permit.createdBy.id &&
+          permit.status === PERMIT_STATUS.PENDING);
+
+      return {
+        id: permit.id,
+        name: permit.name,
+        templateName: permit.template.name,
+        devices: permit.devices.map((d) => d.name).join(', '),
+        workActivities: permit.workActivities.map((w) => w.name).join(', '),
+        startTime: permit.startTime,
+        endTime: permit.endTime,
+        status: permit.status,
+        createdAt: permit.createdAt,
+        createdBy: permit.createdBy.name,
+        canEdit,
+        canDelete,
+      };
+    });
   }
 
   public async deletePermit(
@@ -354,7 +420,32 @@ export class PermitService {
         },
       });
 
-      return newSign;
+      const pendingSigns = await manager.count(PermitSignEntity, {
+        where: {
+          permit: { id: payload.permitId },
+          sectionId: Not(payload.sectionId),
+          status: 'Pending',
+        },
+      });
+
+      if (pendingSigns === 0) {
+        const permit = await manager.findOne(PermitEntity, {
+          where: { id: payload.permitId },
+        });
+
+        if (!permit) {
+          throw new NotFoundException('Permit không tồn tại');
+        }
+
+        permit.status = PERMIT_STATUS.APPROVED;
+        await manager.save(permit);
+      }
+
+      return {
+        sign: newSign,
+        permitStatus:
+          pendingSigns === 0 ? PERMIT_STATUS.APPROVED : PERMIT_STATUS.PENDING,
+      };
     });
   }
 

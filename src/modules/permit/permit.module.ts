@@ -9,6 +9,7 @@ import { MailService } from '../mailer/mail.service';
 import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
 import { RedisModule } from '../redis/redis.module';
+import { RoleModule } from '../role/role.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RedisModule } from '../redis/redis.module';
       TemplateEntity,
     ]),
     RedisModule,
+    RoleModule,
   ],
   controllers: [PermitController],
   providers: [PermitService, MailService, TemplateService],

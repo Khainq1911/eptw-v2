@@ -26,6 +26,8 @@ export class permitListForTableDto {
   endTime: Date;
   status: string;
   createdAt: Date;
+  canEdit: boolean;
+  createdBy: string;
 }
 
 export class filterDto {
