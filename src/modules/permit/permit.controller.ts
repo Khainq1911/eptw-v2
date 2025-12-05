@@ -12,22 +12,27 @@ export class PermitController {
     return await this.permitService.create(payload, user);
   }
 
-  @Post('send-otp')
+  @Post('/send-otp')
   async sendOtp(@User() user: any) {
     return await this.permitService.sendOtp(user);
   }
 
-  @Post('verify-otp')
+  @Post('/verify-otp')
   async verifyOtp(@Body() payload: any, @User() user: any) {
     return await this.permitService.signSection(payload, user);
   }
 
-  @Post('list')
+  @Post('/list')
   async getListPermit(@Body() payload: filterDto, @User() user: any) {
     return await this.permitService.getListPermit(payload, user);
   }
 
-  @Post(':id')
+  @Post('/update')
+  async updatePermit(@Body() payload: any, @User() user: any) {
+    return await this.permitService.updatePermit(payload, user);
+  }
+
+  @Post('/:id')
   async getDetailPermit(
     @Body() payload: any,
     @Param('id') id: number,
@@ -36,8 +41,13 @@ export class PermitController {
     return await this.permitService.getDetailPermit(id, payload.action, user);
   }
 
-  @Post('delete/:id')
+  @Post('/delete/:id')
   async deletePermit(@Param('id') id: number, @User() user: any) {
     return await this.permitService.deletePermit(id, user);
+  }
+
+  @Get('/dashboard')
+  async getDashboard(@User() user: any) {
+    return await this.permitService.getDashboardStats(user);
   }
 }

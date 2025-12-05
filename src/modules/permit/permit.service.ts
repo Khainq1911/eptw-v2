@@ -7,7 +7,14 @@ import {
   NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
-import { Brackets, DataSource, In, Not, Repository } from 'typeorm';
+import {
+  Brackets,
+  DataSource,
+  EntityManager,
+  In,
+  Not,
+  Repository,
+} from 'typeorm';
 import { filterDto, permitDto, permitListForTableDto } from './permit.dto';
 import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
 import { DeviceEntity, UserEntity } from '@/database/entities';
@@ -42,24 +49,7 @@ export class PermitService {
         where: { id: In(workActivityIds) },
       });
 
-      let devices: DeviceEntity[] = [];
-      if (deviceIds?.length) {
-        // 2. Load devices
-        devices = await manager.find(DeviceEntity, {
-          where: { id: In(deviceIds) },
-        });
-
-        const usedDevices = devices.filter((d) => d.isUsed);
-        if (usedDevices.length > 0) {
-          throw new HttpException('Có thiết bị đã được sử dụng', 400);
-        }
-
-        // 3. Update devices as used
-        const deviceEntities = devices.map((d) =>
-          manager.create(DeviceEntity, { ...d, isUsed: true, updatedBy: user }),
-        );
-        await manager.save(DeviceEntity, deviceEntities);
-      }
+      let devices = await this.updateDeviceStatus(deviceIds, user, manager);
 
       // 4. Create permit
       const permitEntity = manager.create(PermitEntity, {
@@ -91,14 +81,15 @@ export class PermitService {
 
       const requiredSigners = this.getRequiredSignerInfor(payload.sections);
       if (requiredSigners.length) {
-        const permitSignEntities = requiredSigners.map((signer) =>
+        const permitSignEntities = requiredSigners.map((section) =>
           manager.create(PermitSignEntity, {
             permit: permitEntity,
-            section_id: signer.id,
-            signer: { id: signer.signId },
+            sectionId: section.id,
+            signer: { id: section.signId },
             status: 'Pending',
           }),
         );
+
         await manager.save(PermitSignEntity, permitSignEntities);
 
         const signerIds = requiredSigners.map((s) => s.signId);
@@ -150,7 +141,6 @@ export class PermitService {
       const adminRole = await this.roleService.getAdminRoleId();
 
       const isAdmin = user.roleId === adminRole?.id;
-      console.log('isAdmin', isAdmin);
       const isCreator = permit?.createdBy?.id === user.id;
 
       if (!isAdmin && !isCreator) {
@@ -296,7 +286,8 @@ export class PermitService {
         (permit.endTime >= new Date() && user.id === permit.createdBy.id);
 
       const canDelete =
-        user.roleId === adminRole?.id ||
+        (user.roleId === adminRole?.id &&
+          permit.status !== PERMIT_STATUS.CANCELLED) ||
         (user.id === permit.createdBy.id &&
           permit.status === PERMIT_STATUS.PENDING);
 
@@ -449,6 +440,106 @@ export class PermitService {
     });
   }
 
+  public async updatePermit(payload: any, user: any): Promise<any> {
+    return await this.dataSource.transaction(async (manager) => {
+      const {attachments: attachmentsPayload, ...rest} = payload;
+      const permit = await manager.findOne(PermitEntity, {
+        where: { id: payload.id },
+        relations: ['devices', 'workActivities'],
+      });
+
+      if (!permit) {
+        throw new NotFoundException('Permit not found');
+      }
+
+      const deviceIds = permit.devices.map((d: any) => d.id);
+
+      if (deviceIds && deviceIds.length > 0) {
+        const deviceList = await manager.find(DeviceEntity, {
+          where: { id: In(deviceIds) },
+        });
+
+        const usedDevices = deviceList.map((d) => ({
+          ...d,
+          isUsed: false,
+          updatedBy: user,
+        }));
+
+        await manager.save(DeviceEntity, usedDevices);
+      }
+
+      const workActivities = await manager.find(WorkActivityEntity, {
+        where: { id: In(payload.workActivityIds) },
+      });
+
+      const updatedDevices = await this.updateDeviceStatus(
+        payload.deviceIds,
+        user,
+        manager,
+      );
+
+      const newPermit = await manager.save(PermitEntity, {
+        ...permit,
+        ...rest,
+        workActivities,
+        devices: updatedDevices,
+        updatedBy: user,
+      });
+
+      const attachments = attachmentsPayload || [];
+
+      const existingFiles = await manager.find(PermitFileEntity, {
+        where: { permit: { id: payload.id } },
+      });
+
+      const keepIds = attachments.filter((a) => a.id).map((a) => a.id);
+      const removedFiles = existingFiles.filter((f) => !keepIds.includes(f.id));
+
+      if (removedFiles.length > 0) {
+        const removedIds = removedFiles.map((f) => f.id);
+        await manager.delete(PermitFileEntity, removedIds);
+      }
+
+      const newAttachments = attachments.filter((a) => !a.id);
+      const attachmentEntities = newAttachments.map((att) =>
+        manager.create(PermitFileEntity, {
+          name: att.originalname,
+          type: att.mimetype,
+          size: att.size,
+          bucket: att.bucket || 'attachment-file',
+          objectKey: att.key,
+          url: att.url,
+          permit: newPermit,
+        }),
+      );
+
+      const newAttachmentsEntity = await manager.save(
+        PermitFileEntity,
+        attachmentEntities,
+      );
+
+      return {
+        attachments: newAttachmentsEntity,
+      };
+    });
+  }
+
+  public async getDashboardStats(user: any): Promise<any> {
+    const totalPermits = await this.permitRepository.count();
+
+    const permit = await this.permitRepository
+      .createQueryBuilder('p')
+      .select('p.template_id', 'template_id')
+      .addSelect('t.name', 'name')
+      .addSelect('COUNT(*)', 'total_permits')
+      .innerJoin('p.template', 't')
+      .groupBy('p.template_id')
+      .addGroupBy('t.name')
+      .getRawMany();
+
+    return { permit, totalPermits };
+  }
+
   private async verifyOtp(otp: number, user: any): Promise<boolean> {
     const storedOtp = await this.redisService.get(user.id.toString());
     if (!storedOtp) return false;
@@ -468,5 +559,33 @@ export class PermitService {
         name: section.name,
         signId: section.sign.signId,
       }));
+  }
+
+  private async updateDeviceStatus(
+    deviceIds: number[],
+    user: any,
+    manager: EntityManager,
+  ) {
+    if (!deviceIds || deviceIds.length === 0) return;
+
+    const listDevices = await manager.find(DeviceEntity, {
+      where: { id: In(deviceIds) },
+    });
+
+    const isUsedValidate = listDevices.some((d) => d.isUsed);
+
+    if (isUsedValidate) {
+      throw new BadRequestException('Có thiết bị đã được sử dụng');
+    }
+
+    const updatedDevices = listDevices.map((d) => ({
+      ...d,
+      isUsed: true,
+      updatedBy: user,
+    }));
+
+    await manager.save(DeviceEntity, updatedDevices);
+
+    return updatedDevices;
   }
 }

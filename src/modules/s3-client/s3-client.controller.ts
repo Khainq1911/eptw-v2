@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Post,
   UploadedFile,
@@ -24,5 +25,14 @@ export class S3Controller {
   @UseInterceptors(FilesInterceptor('files'))
   async uploadMany(@UploadedFiles() files: Express.Multer.File[]) {
     return this.s3ClientService.uploadFiles(files, 'attachment-file');
+  }
+
+  @Post('download-url')
+ 
+  async downloadFile(
+    @Body()  file: { bucketName: string; fileKey: string },
+  ) {
+    console.log(file);
+    return this.s3ClientService.downloadFile(file.bucketName, file.fileKey);
   }
 }
