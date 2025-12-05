@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Post,
   UploadedFile,
@@ -27,9 +28,11 @@ export class S3Controller {
   }
 
   @Post('download-url')
+ 
   async downloadFile(
-    @UploadedFile() file: { bucketName: string; fileKey: string },
+    @Body()  file: { bucketName: string; fileKey: string },
   ) {
+    console.log(file);
     return this.s3ClientService.downloadFile(file.bucketName, file.fileKey);
   }
 }

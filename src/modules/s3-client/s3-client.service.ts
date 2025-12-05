@@ -62,21 +62,22 @@ export class S3ClientService {
   }
 
   public async uploadFile(file: Express.Multer.File, bucketName: string) {
-    const fileKey = `${uuidv4()}-${file.originalname}`;
+    const safeFileName = file.originalname.replace(/\s+/g, '_');
+    const key = safeFileName + '-' + uuidv4();
     try {
       await this.s3Client.send(
         new PutObjectCommand({
           Bucket: bucketName,
-          Key: fileKey,
+          Key: key,
           Body: file.buffer,
           ContentType: file.mimetype,
         }),
       );
 
       const baseUrl = this.configService.getOrThrow('AWS_S3_ENDPOINT');
-      const fileUrl = `${baseUrl}/${bucketName}/${fileKey}`;
+      const fileUrl = `${baseUrl}/${bucketName}/${key}`;
       return {
-        key: fileKey,
+        key: key,
         url: fileUrl,
         originalname: file.originalname,
         mimetype: file.mimetype,
@@ -99,14 +100,16 @@ export class S3ClientService {
 
   public async downloadFile(bucketName: string, fileKey: string) {
     try {
+      console.log(fileKey);
       const command = new GetObjectCommand({
         Bucket: bucketName,
         Key: fileKey,
       });
+      console.log(command);
       const downloadUrl = await getSignedUrl(this.s3Client, command, {
         expiresIn: 3600,
       });
-
+      console.log(3);
       return { url: downloadUrl };
     } catch (error) {
       console.error('Download failed:', error);
