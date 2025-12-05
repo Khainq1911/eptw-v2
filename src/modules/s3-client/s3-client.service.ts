@@ -4,9 +4,11 @@ import {
   CreateBucketCommand,
   HeadBucketCommand,
   PutObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -61,7 +63,6 @@ export class S3ClientService {
 
   public async uploadFile(file: Express.Multer.File, bucketName: string) {
     const fileKey = `${uuidv4()}-${file.originalname}`;
-    console.log(file);
     try {
       await this.s3Client.send(
         new PutObjectCommand({
@@ -94,5 +95,22 @@ export class S3ClientService {
     );
 
     return results;
+  }
+
+  public async downloadFile(bucketName: string, fileKey: string) {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: fileKey,
+      });
+      const downloadUrl = await getSignedUrl(this.s3Client, command, {
+        expiresIn: 3600,
+      });
+
+      return { url: downloadUrl };
+    } catch (error) {
+      console.error('Download failed:', error);
+      throw new InternalServerErrorException('Download file failed');
+    }
   }
 }

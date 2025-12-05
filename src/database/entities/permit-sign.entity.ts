@@ -26,13 +26,13 @@ export class PermitSignEntity {
   @Column({ name: 'section_id' })
   sectionId: number;
 
-  @Column({ name: 'signer_id' })
+  @Column({ name: 'signer_id', unique: false })
   signerId: number;
 
   @Column({ name: 'sign_url', type: 'text', nullable: true })
   signUrl: string;
 
-  @OneToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'signer_id' })
   signer: UserEntity;
 

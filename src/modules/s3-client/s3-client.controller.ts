@@ -25,4 +25,11 @@ export class S3Controller {
   async uploadMany(@UploadedFiles() files: Express.Multer.File[]) {
     return this.s3ClientService.uploadFiles(files, 'attachment-file');
   }
+
+  @Post('download-url')
+  async downloadFile(
+    @UploadedFile() file: { bucketName: string; fileKey: string },
+  ) {
+    return this.s3ClientService.downloadFile(file.bucketName, file.fileKey);
+  }
 }
