@@ -22,6 +22,11 @@ export class PermitController {
     return await this.permitService.signSection(payload, user);
   }
 
+  @Post('/section/reject')
+  async rejectSection(@Body() payload: any) {
+    return await this.permitService.rejectSection(payload);
+  }
+
   @Post('/list')
   async getListPermit(@Body() payload: filterDto, @User() user: any) {
     return await this.permitService.getListPermit(payload, user);

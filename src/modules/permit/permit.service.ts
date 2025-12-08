@@ -442,7 +442,7 @@ export class PermitService {
 
   public async updatePermit(payload: any, user: any): Promise<any> {
     return await this.dataSource.transaction(async (manager) => {
-      const {attachments: attachmentsPayload, ...rest} = payload;
+      const { attachments: attachmentsPayload, ...rest } = payload;
       const permit = await manager.findOne(PermitEntity, {
         where: { id: payload.id },
         relations: ['devices', 'workActivities'],
@@ -538,6 +538,36 @@ export class PermitService {
       .getRawMany();
 
     return { permit, totalPermits };
+  }
+
+  public async rejectSection(payload: any) {
+    return await this.dataSource.transaction(async (manager) => {
+      const permitSign = await manager.findOne(PermitSignEntity, {
+        where: [{ permitId: payload.permitId, sectionId: payload.sectionId }],
+      });
+
+      if (!permitSign) {
+        throw new NotFoundException('Phần ký không tồn tại');
+      }
+
+      const newSign = await manager.save(PermitSignEntity, {
+        ...permitSign,
+        status: 'Rejected',
+        reason: payload.reason,
+        updatedAt: new Date(),
+      });
+
+      await manager
+        .createQueryBuilder()
+        .update(PermitEntity)
+        .set({
+          status: PERMIT_STATUS.REJECTED,
+        })
+        .where({ id: payload.permitId })
+        .execute();
+
+      return { permitStatus: PERMIT_STATUS.REJECTED, sign: newSign };
+    });
   }
 
   private async verifyOtp(otp: number, user: any): Promise<boolean> {

@@ -12,7 +12,6 @@ import { WorkActivityEntity } from './work-activity.entity';
 import { DeviceEntity } from './device.entity';
 import { UserEntity } from './user.entities';
 import { PermitFileEntity } from './permit-file.entity';
-import { PermitApprovalEntity } from './permit-approval.entity';
 import { TemplateEntity } from './template.entity';
 import { PermitSignEntity } from './permit-sign.entity';
 
@@ -62,9 +61,6 @@ export class PermitEntity extends BaseEntity {
 
   @OneToMany(() => PermitFileEntity, (file) => file.permit)
   attachments: PermitFileEntity[];
-
-  @OneToMany(() => PermitApprovalEntity, (approval) => approval.permit)
-  approvals: PermitApprovalEntity[];
 
   @ManyToMany(() => WorkActivityEntity)
   @JoinTable({

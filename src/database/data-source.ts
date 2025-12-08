@@ -11,7 +11,6 @@ import {
 } from './entities';
 import { PermitEntity } from './entities/permit.entity';
 import { PermitFileEntity } from './entities/permit-file.entity';
-import { PermitApprovalEntity } from './entities/permit-approval.entity';
 import { WorkActivityEntity } from './entities/work-activity.entity';
 import { PermitSignEntity } from './entities/permit-sign.entity';
 const options: DataSourceOptions & SeederOptions = {
@@ -30,7 +29,6 @@ const options: DataSourceOptions & SeederOptions = {
     TemplateTypeEntity,
     PermitEntity,
     PermitFileEntity,
-    PermitApprovalEntity,
     WorkActivityEntity,
     PermitSignEntity,
   ],
