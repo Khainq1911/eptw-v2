@@ -11,7 +11,6 @@ import {
 import { TemplateTypeEntity } from './entities/template-type.entity';
 import { PermitEntity } from './entities/permit.entity';
 import { PermitFileEntity } from './entities/permit-file.entity';
-import { PermitApprovalEntity } from './entities/permit-approval.entity';
 import { WorkActivityEntity } from './entities/work-activity.entity';
 import { PermitSignEntity } from './entities/permit-sign.entity';
 
@@ -36,7 +35,6 @@ import { PermitSignEntity } from './entities/permit-sign.entity';
           TemplateTypeEntity,
           PermitEntity,
           PermitFileEntity,
-          PermitApprovalEntity,
           WorkActivityEntity,
           PermitSignEntity,
         ],

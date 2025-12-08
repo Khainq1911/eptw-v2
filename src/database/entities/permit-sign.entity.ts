@@ -16,8 +16,8 @@ export class PermitSignEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  permit_id: number;
+  @Column({ name: 'permit_id' })
+  permitId: number;
 
   @ManyToOne(() => PermitEntity, (permit) => permit.sign)
   @JoinColumn({ name: 'permit_id' })
@@ -31,6 +31,9 @@ export class PermitSignEntity {
 
   @Column({ name: 'sign_url', type: 'text', nullable: true })
   signUrl: string;
+
+  @Column({ name: 'reason', type: 'text', nullable: true })
+  reason: string;
 
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'signer_id' })
