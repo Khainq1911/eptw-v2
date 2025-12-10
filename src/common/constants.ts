@@ -10,10 +10,15 @@ export class QueryDto {
 }
 
 export class PERMIT_STATUS {
-    static readonly PENDING = 'Pending';
-    static readonly APPROVED = 'Approved';
-    static readonly REJECTED = 'Rejected';
-    static readonly EXPIRED = 'Expired';
-    static readonly CANCELLED = 'Cancelled';
-    static readonly CLOSED = 'Closed';
+  static readonly PENDING = 'Pending';
+  static readonly APPROVED = 'Approved';
+  static readonly REJECTED = 'Rejected';
+  static readonly EXPIRED = 'Expired';
+  static readonly CANCELLED = 'Cancelled';
+  static readonly CLOSED = 'Closed';
+}
+
+export class APPROVAL_TYPE {
+  static readonly PARALLEL = 'PA';
+  static readonly SEQUENCE = 'SA';
 }

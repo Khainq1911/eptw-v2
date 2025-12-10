@@ -7,12 +7,14 @@ export default class ApprovalTypeSeeder implements Seeder {
       {
         id: 1,
         name: 'Sequential Approval',
+        code: 'SA',
         description:
           'Tasks involving high-risk activities—such as welding or cutting—requiring step-by-step approval in a defined order.',
       },
       {
         id: 2,
         name: 'Parallel Approval',
+        code: 'PA',
         description:
           'Lower-risk tasks—such as maintenance or inspection—that allow multiple approvals to proceed simultaneously.',
       },

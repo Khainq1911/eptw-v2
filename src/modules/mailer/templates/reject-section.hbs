@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333;">
+    <h2>❗ Section đã bị từ chối</h2>
+
+    <p>Xin chào {{receiverName}},</p>
+
+    <p>
+      Section <strong>{{sectionName}}</strong> trong Permit
+      <strong>#{{permitCode}}</strong> đã bị từ chối bởi
+      <strong>{{signerName}}</strong>.
+    </p>
+
+    <p><strong>Lý do từ chối:</strong></p>
+    <blockquote
+      style="background: #f8d7da; padding: 12px; border-left: 4px solid #c00;"
+    >
+      {{reason}}
+    </blockquote>
+
+    <p>Trạng thái permit hiện tại: <strong>{{permitStatus}}</strong></p>
+
+    <br />
+    <p>Vui lòng kiểm tra lại hệ thống để cập nhật thông tin.</p>
+
+    <p>Trân trọng,<br />Permit System</p>
+  </body>
+</html>

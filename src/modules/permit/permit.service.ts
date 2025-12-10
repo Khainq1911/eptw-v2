@@ -2,10 +2,9 @@ import { PermitEntity } from '@/database/entities/permit.entity';
 import {
   BadRequestException,
   ForbiddenException,
-  HttpException,
   Injectable,
-  NotAcceptableException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Brackets,
@@ -22,7 +21,7 @@ import { MailService } from '../mailer/mail.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PermitFileEntity } from '@/database/entities/permit-file.entity';
 import { PermitSignEntity } from '@/database/entities/permit-sign.entity';
-import { PERMIT_STATUS } from '@/common/constants';
+import { APPROVAL_TYPE, PERMIT_STATUS } from '@/common/constants';
 import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
 import { RoleService } from '../role/role.service';
@@ -154,15 +153,35 @@ export class PermitService {
 
     const signs = await this.dataSource.getRepository(PermitSignEntity).find({
       where: { permit: { id } },
+      order: { sectionId: 'ASC' },
       relations: ['signer'],
     });
 
     const template = await this.templateService.findOne(permit.template.id);
 
+    const approvalTypeCode = template?.approvalType?.code;
+
+    let signList: any;
+    if (approvalTypeCode === APPROVAL_TYPE.SEQUENCE) {
+      let index = signs.findIndex((s) => s.status === 'signed');
+      index = index === -1 ? 0 : index;
+
+      signList = signs.map((item, idx) => {
+        if (idx > index) {
+          return { ...item, isSignable: false };
+        }
+        return { ...item, isSignable: true };
+      });
+    } else {
+      signList = signs.map((item) => {
+        return { ...item, isSignable: true };
+      });
+    }
+
     return {
       ...permit,
       template,
-      signs,
+      signs: signList,
     };
   }
 
@@ -544,6 +563,7 @@ export class PermitService {
     return await this.dataSource.transaction(async (manager) => {
       const permitSign = await manager.findOne(PermitSignEntity, {
         where: [{ permitId: payload.permitId, sectionId: payload.sectionId }],
+        relations: ['permit', 'signer'],
       });
 
       if (!permitSign) {
@@ -557,7 +577,7 @@ export class PermitService {
         updatedAt: new Date(),
       });
 
-      await manager
+      const newPermit = await manager
         .createQueryBuilder()
         .update(PermitEntity)
         .set({
@@ -566,8 +586,126 @@ export class PermitService {
         .where({ id: payload.permitId })
         .execute();
 
+      const permit = await this.permitRepository.findOne({
+        where: { id: payload.permitId },
+        relations: ['createdBy'],
+      });
+
+      const sectionName = permit?.sections.find(
+        (s) => s.id === payload.sectionId,
+      )?.name;
+
+      const receiver = permit?.createdBy;
+
+      if (permit && receiver && sectionName) {
+        await this.mailService.sendMail({
+          email: receiver?.email,
+          subject: `Section bị từ chối - Permit #${permit.id}`,
+          template: 'reject-section',
+          context: {
+            receiverName: receiver.email,
+            permitCode: permit.id,
+            sectionName: sectionName,
+            signerName: permitSign.signer.name,
+            reason: payload.reason,
+            permitStatus: PERMIT_STATUS.REJECTED,
+          },
+        });
+      }
+
       return { permitStatus: PERMIT_STATUS.REJECTED, sign: newSign };
     });
+  }
+
+  public async updatePermitStatus(payload: any, user: any) {
+    const permit = await this.permitRepository.findOne({
+      where: { id: payload.permitId },
+      relations: ['createdBy'],
+    });
+
+    if (!permit) {
+      throw new NotFoundException('Permit not found');
+    }
+
+    const adminRole = await this.roleService.getAdminRoleId();
+
+    if (user.id !== permit?.createdBy.id || user.roleId !== adminRole?.id) {
+      throw new BadRequestException(
+        'Bạn không có quyền thực hiện hành động này',
+      );
+    }
+
+    const newPermit = await this.permitRepository.save({
+      ...permit,
+      status: payload.status,
+      updatedBy: user,
+    });
+
+    await this.mailService.sendMail({
+      email: permit.createdBy?.email,
+      subject: `Section bị từ chối - Permit #${permit.id}`,
+      template: 'reject-permit',
+      context: {
+        receiverName: permit.createdBy?.name,
+        permitCode: permit.id,
+        updatedBy: user.name,
+        newStatus: payload.status,
+      },
+    });
+
+    return newPermit;
+  }
+
+  public async rejectPermit(payload: any, user: any) {
+    const permit = await this.permitRepository.findOne({
+      where: { id: payload.permitId },
+      relations: ['createdBy'],
+    });
+
+    if (!permit) {
+      throw new NotFoundException('Permit not found');
+    }
+
+    const signers = await this.dataSource.getRepository(PermitSignEntity).find({
+      where: { permit: { id: payload.permitId } },
+      relations: ['signer'],
+    });
+
+    const signerIds = signers.map((s) => s.signer.id);
+
+    const adminRole = await this.roleService.getAdminRoleId();
+
+    if (
+      user.id !== permit?.createdBy.id ||
+      user.roleId !== adminRole?.id ||
+      (signerIds.length > 0 && !signerIds.includes(user.id))
+    ) {
+      throw new BadRequestException(
+        'Bạn không có quyền thực hiện hành động này',
+      );
+    }
+
+    const newPermit = await this.permitRepository.save({
+      ...permit,
+      status: PERMIT_STATUS.REJECTED,
+      updatedBy: user,
+    });
+
+    await this.returnDevices(payload.permitId);
+
+    await this.mailService.sendMail({
+      email: permit.createdBy?.email,
+      subject: `Section bị từ chối - Permit #${permit.id}`,
+      template: 'reject-permit',
+      context: {
+        receiverName: permit.createdBy?.name,
+        permitCode: permit.id,
+        rejectedBy: user.name,
+        permitStatus: PERMIT_STATUS.REJECTED,
+      },
+    });
+
+    return newPermit;
   }
 
   private async verifyOtp(otp: number, user: any): Promise<boolean> {
@@ -589,6 +727,34 @@ export class PermitService {
         name: section.name,
         signId: section.sign.signId,
       }));
+  }
+
+  private async returnDevices(permitId: number) {
+    const permit = await this.permitRepository.findOne({
+      where: { id: permitId },
+      relations: ['devices'],
+    });
+
+    if (!permit) throw new NotFoundException('Permit not found');
+
+    const deviceIds = permit.devices.map((d) => d.id);
+
+    const devices = await this.dataSource.getRepository(DeviceEntity).find({
+      where: { id: In(deviceIds) },
+    });
+
+    if (!devices) throw new NotFoundException('Devices not found');
+
+    if (devices.length === 0) return [];
+
+    const updatedDevices = devices.map((d) => ({
+      ...d,
+      isUsed: false,
+    }));
+
+    await this.dataSource.getRepository(DeviceEntity).save(updatedDevices);
+
+    return devices;
   }
 
   private async updateDeviceStatus(

@@ -38,7 +38,7 @@ import { PermitSignEntity } from './entities/permit-sign.entity';
           WorkActivityEntity,
           PermitSignEntity,
         ],
-        synchronize: true,
+        synchronize: false,
       }),
     }),
   ],
