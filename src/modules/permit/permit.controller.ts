@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { PermitService } from './permit.service';
 import { filterDto, permitDto } from './permit.dto';
 import { User } from '@/common/decorators/user.decorator';
@@ -35,6 +35,16 @@ export class PermitController {
   @Post('/update')
   async updatePermit(@Body() payload: any, @User() user: any) {
     return await this.permitService.updatePermit(payload, user);
+  }
+
+  @Post('/update-status')
+  async updatePermitStatus(@Body() payload: any, @User() user: any) {
+    return await this.permitService.updatePermitStatus(payload, user);
+  }
+
+  @Patch('/reject')
+  async rejectPermit(@Body() payload: any, @User() user: any) {
+    return await this.permitService.rejectPermit(payload, user);
   }
 
   @Post('/:id')
