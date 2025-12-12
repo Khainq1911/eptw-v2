@@ -19,6 +19,7 @@ import { PermitModule } from './modules/permit/permit.module';
 import { UserModule } from './modules/user/user.module';
 import { S3Module } from './modules/s3-client/s3-client.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { RedisModule } from './modules/redis/redis.module';
     UserModule,
     S3Module,
     RedisModule,
+    DashboardModule
   ],
   controllers: [AppController],
   providers: [AppService],
