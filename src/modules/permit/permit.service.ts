@@ -577,7 +577,7 @@ export class PermitService {
         updatedAt: new Date(),
       });
 
-      const newPermit = await manager
+      await manager
         .createQueryBuilder()
         .update(PermitEntity)
         .set({

@@ -24,5 +24,6 @@ import { RoleModule } from '../role/role.module';
   ],
   controllers: [PermitController],
   providers: [PermitService, MailService, TemplateService],
+  exports: [PermitService],
 })
 export class PermitModule {}
