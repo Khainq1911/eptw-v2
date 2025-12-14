@@ -11,6 +11,7 @@ import {
   DataSource,
   EntityManager,
   In,
+  LessThan,
   Not,
   Repository,
 } from 'typeorm';
@@ -25,6 +26,7 @@ import { APPROVAL_TYPE, PERMIT_STATUS } from '@/common/constants';
 import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
 import { RoleService } from '../role/role.service';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class PermitService {
@@ -783,5 +785,59 @@ export class PermitService {
     await manager.save(DeviceEntity, updatedDevices);
 
     return updatedDevices;
+  }
+
+  @Cron('0 0 0 * * *')
+  async handleCronExpirePermit() {
+    const now = new Date();
+
+    return await this.dataSource.transaction(async (manager) => {
+      const expiredPermits = await manager.find(PermitEntity, {
+        select: ['id'],
+        where: {
+          endTime: LessThan(now),
+          status: Not(
+            In([
+              PERMIT_STATUS.CLOSED,
+              PERMIT_STATUS.EXPIRED,
+              PERMIT_STATUS.CANCELLED,
+              PERMIT_STATUS.REJECTED,
+            ]),
+          ),
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!expiredPermits.length) {
+        console.log('No expired permits found');
+        return;
+      }
+
+      const permitIds = expiredPermits.map((p) => p.id);
+      console.log('permitIds', permitIds);
+
+      await manager.update(
+        PermitEntity,
+        { id: In(permitIds) },
+        { status: PERMIT_STATUS.EXPIRED },
+      );
+
+      await manager
+        .createQueryBuilder()
+        .update(DeviceEntity)
+        .set({ isUsed: false })
+        .where(
+          `
+        id IN (
+          SELECT device_id
+          FROM permit_device
+          WHERE permit_id IN (:...permitIds)
+        )
+      `,
+          { permitIds },
+        )
+        .execute();
+      console.log('Cron expire permit executed successfully');
+    });
   }
 }
