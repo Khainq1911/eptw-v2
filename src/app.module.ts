@@ -20,6 +20,7 @@ import { UserModule } from './modules/user/user.module';
 import { S3Module } from './modules/s3-client/s3-client.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -41,7 +42,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     UserModule,
     S3Module,
     RedisModule,
-    DashboardModule
+    DashboardModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
