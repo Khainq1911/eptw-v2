@@ -18,6 +18,14 @@ export class PERMIT_STATUS {
   static readonly CLOSED = 'Closed';
 }
 
+export class ROLE_TYPE {
+  static readonly ADMIN = 'Admin';
+  static readonly WORKER = 'Worker';
+  static readonly SUPERVISOR = 'Supervisor';
+  static readonly ISSUER = 'Issuer';
+}
+
+
 export class APPROVAL_TYPE {
   static readonly PARALLEL = 'PA';
   static readonly SEQUENCE = 'SA';
