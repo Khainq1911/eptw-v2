@@ -176,4 +176,33 @@ export class TemplateService {
       .orderBy('template.name', 'ASC')
       .getRawMany();
   }
+
+  public async getTemplateApprovalTypeStats(): Promise<any> {
+    const qb = this.templateRepository
+      .createQueryBuilder('t')
+      .leftJoin('t.approvalType', 'at')
+      .select('at.name', 'name')
+      .addSelect('COUNT(t.id)', 'count')
+      .groupBy('at.name');
+
+    const result = await qb.getRawMany();
+
+    return result;
+  }
+
+  public async getTemplateTypeStats(): Promise<any> {
+    const qb = this.templateRepository
+      .createQueryBuilder('t')
+      .leftJoin('t.templateType', 'tt')
+      .select('tt.name', 'name')
+      .addSelect('COUNT(t.id)', 'count')
+      .groupBy('tt.name');
+
+    const result = await qb.getRawMany();
+
+    return result.map((item) => ({
+      name: item.name,
+      count: +item.count,
+    }));
+  }
 }

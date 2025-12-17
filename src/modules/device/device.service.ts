@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { CreateDeviceDto, DeviceDto, FilterDto } from './device.dto';
 import AppDataSource from '@/database/data-source';
+import { DEVICE_STATUS, DEVICE_STATUS_ALIAS } from '@/common/enum';
 
 @Injectable()
 export class DeviceService {
@@ -28,11 +29,11 @@ export class DeviceService {
 
   async list(filter: FilterDto) {
     const countActiveDevice = await this.deviceRepository.count({
-      where: { status: 'active' },
+      where: { status: DEVICE_STATUS.ACTIVE },
     });
 
     const countInactiveDevice = await this.deviceRepository.count({
-      where: { status: 'maintain' },
+      where: { status: DEVICE_STATUS.MAINTAIN },
     });
 
     const countIsUsedDevice = await this.deviceRepository.count({
@@ -102,7 +103,7 @@ export class DeviceService {
       throw new HttpException('Device not found', 404);
     }
 
-    await this.deviceRepository.update(id, { status: 'delete' });
+    await this.deviceRepository.update(id, { status: DEVICE_STATUS.DELETED });
 
     return { message: 'Device deleted successfully' };
   }
@@ -115,5 +116,38 @@ export class DeviceService {
 
   async listDevices() {
     return await this.deviceRepository.find();
+  }
+
+  public async deviceStatusStats(): Promise<any> {
+    const qb = this.deviceRepository
+      .createQueryBuilder('d')
+      .select('d.status', 'status')
+      .addSelect('COUNT(d.id)', 'count')
+      .groupBy('d.status');
+
+    const result = await qb.getRawMany();
+
+    const res = result.map((item) => ({
+      name: DEVICE_STATUS_ALIAS[item.status.toUpperCase()],
+      count: item.count,
+    }));
+    return res;
+  }
+
+  public async getUsedStats(): Promise<{ name: string; count: number }[]> {
+    const data = await this.deviceRepository
+      .createQueryBuilder('d')
+      .select('d.isUsed', 'name')
+      .addSelect('COUNT(d.id)', 'count')
+      .groupBy('d.isUsed')
+      .getRawMany();
+
+    return data.map((item) => ({
+      name:
+        item.name === true || item.name === 'true'
+          ? 'Đang sử dụng'
+          : 'Chưa sử dụng',
+      count: +item.count,
+    }));
   }
 }

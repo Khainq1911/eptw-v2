@@ -7,11 +7,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  Between,
   Brackets,
   DataSource,
   EntityManager,
   In,
   LessThan,
+  LessThanOrEqual,
+  MoreThanOrEqual,
   Not,
   Repository,
 } from 'typeorm';
@@ -190,12 +193,9 @@ export class PermitService {
   async getListPermit(
     filter: filterDto,
     user: any,
-  ): Promise<permitListForTableDto[]> {
+  ): Promise<{ res: permitListForTableDto[]; count: number } | []> {
     const adminRole = await this.roleService.getAdminRoleId();
 
-    // ----------------------------
-    // STEP 1: Query danh sách permit.id
-    // ----------------------------
     let idQuery = this.dataSource
       .createQueryBuilder()
       .select('permit.id', 'id')
@@ -203,7 +203,6 @@ export class PermitService {
       .leftJoin('permit.template', 'template')
       .leftJoin('permit.createdBy', 'createdBy');
 
-    // 🔥 Phân quyền
     if (user.roleId !== adminRole?.id) {
       idQuery.andWhere(
         new Brackets((qb) => {
@@ -221,7 +220,6 @@ export class PermitService {
       );
     }
 
-    // 🔍 Filter
     if (filter.name)
       idQuery.andWhere('permit.name ILIKE :name', { name: `%${filter.name}%` });
 
@@ -272,7 +270,8 @@ export class PermitService {
       );
     }
 
-    // 🔥 Pagination CHUẨN
+    const count = await idQuery.getCount();
+
     idQuery
       .orderBy('permit.createdAt', 'DESC')
       .offset((filter.page - 1) * filter.limit)
@@ -283,9 +282,6 @@ export class PermitService {
 
     if (ids.length === 0) return [];
 
-    // ----------------------------
-    // STEP 2: Query đầy đủ bằng danh sách id
-    // ----------------------------
     const query = this.dataSource
       .getRepository(PermitEntity)
       .createQueryBuilder('permit')
@@ -298,10 +294,7 @@ export class PermitService {
 
     const listPermits = await query.getMany();
 
-    // ----------------------------
-    // Format kết quả
-    // ----------------------------
-    return listPermits.map((permit) => {
+    const permitRes = listPermits.map((permit) => {
       const canEdit =
         user.roleId === adminRole?.id ||
         (permit.endTime >= new Date() && user.id === permit.createdBy.id);
@@ -327,6 +320,8 @@ export class PermitService {
         canDelete,
       };
     });
+
+    return { res: permitRes, count };
   }
 
   public async deletePermit(
@@ -545,20 +540,33 @@ export class PermitService {
     });
   }
 
-  public async getDashboardStats(user: any): Promise<any> {
-    const totalPermits = await this.permitRepository.count();
-
-    const permit = await this.permitRepository
+  public async getDashboardStats(filter: any): Promise<any> {
+    const qb = this.permitRepository
       .createQueryBuilder('p')
       .select('p.template_id', 'template_id')
       .addSelect('t.name', 'name')
       .addSelect('COUNT(*)', 'total_permits')
       .innerJoin('p.template', 't')
       .groupBy('p.template_id')
-      .addGroupBy('t.name')
-      .getRawMany();
+      .addGroupBy('t.name');
 
-    return { permit, totalPermits };
+    if (filter.start) {
+      qb.andWhere('p.created_at >= :start', {
+        start: filter.start,
+      });
+    }
+
+    if (filter.end) {
+      qb.andWhere('p.created_at <= :end', {
+        end: filter.end,
+      });
+    }
+    const permit = await qb.getRawMany();
+
+    return permit.map((p) => ({
+      name: p.name,
+      count: +p.total_permits,
+    }));
   }
 
   public async rejectSection(payload: any) {
@@ -785,6 +793,78 @@ export class PermitService {
     await manager.save(DeviceEntity, updatedDevices);
 
     return updatedDevices;
+  }
+
+  public async getStatusPermitStats(filter: any): Promise<any> {
+    const status = [
+      PERMIT_STATUS.PENDING,
+      PERMIT_STATUS.APPROVED,
+      PERMIT_STATUS.REJECTED,
+      PERMIT_STATUS.EXPIRED,
+      PERMIT_STATUS.CLOSED,
+      PERMIT_STATUS.CANCELLED,
+    ];
+    const whereBase: any = {};
+
+    if (filter.start && filter.end) {
+      whereBase.createdAt = Between(filter.start, filter.end);
+    } else if (filter.start) {
+      whereBase.createdAt = MoreThanOrEqual(filter.start);
+    } else if (filter.end) {
+      whereBase.createdAt = LessThanOrEqual(filter.end);
+    }
+
+    const result = await Promise.all(
+      status.map(async (status) => {
+        const count = await this.permitRepository.count({
+          where: {
+            ...whereBase,
+            status,
+          },
+        });
+
+        return { name: status, count };
+      }),
+    );
+
+    return result;
+  }
+
+  public async getRolePermitStats(
+    filter: any,
+  ): Promise<{ name: string; count: number }[]> {
+    const roles = await this.roleService.getRoles();
+
+    const whereBase: any = {};
+
+    if (filter.start && filter.end) {
+      whereBase.createdAt = Between(filter.start, filter.end);
+    } else if (filter.start) {
+      whereBase.createdAt = MoreThanOrEqual(filter.start);
+    } else if (filter.end) {
+      whereBase.createdAt = LessThanOrEqual(filter.end);
+    }
+
+    const result = await Promise.all(
+      roles.map(async (role) => {
+        const count = await this.permitRepository.count({
+          where: {
+            ...whereBase,
+            createdBy: {
+              role: { id: role.id },
+            },
+          },
+          relations: ['createdBy', 'createdBy.role'],
+        });
+
+        return {
+          name: role.name,
+          count,
+        };
+      }),
+    );
+
+    return result;
   }
 
   @Cron('0 0 0 * * *')
