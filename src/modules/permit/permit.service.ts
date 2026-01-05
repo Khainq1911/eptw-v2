@@ -308,7 +308,7 @@ export class PermitService {
       return {
         id: permit.id,
         name: permit.name,
-        templateName: permit.template.name,
+        templateName: permit.template?.name,
         devices: permit.devices.map((d) => d.name).join(', '),
         workActivities: permit.workActivities.map((w) => w.name).join(', '),
         startTime: permit.startTime,

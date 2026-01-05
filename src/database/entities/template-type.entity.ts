@@ -7,8 +7,8 @@ export class TemplateTypeEntity extends BaseEntity {
   name: string;
 
   @Column({ name: 'description', nullable: true })
-  description: string;
+  description?: string;
 
   @DeleteDateColumn()
-  deletedAt: Date;
+  deletedAt?: Date;
 }
