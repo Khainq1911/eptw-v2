@@ -8,11 +8,13 @@ import {
   Post,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import type { DeviceDto, FilterDto } from './device.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { ROLE } from '@/common/enum';
+import { Response } from 'express';
 
 @Controller('device')
 export class DeviceController {
@@ -23,7 +25,7 @@ export class DeviceController {
     return await this.deviceService.list(filter);
   }
 
-  @Get("list-devices")
+  @Get('list-devices')
   async listDevices() {
     return await this.deviceService.listDevices();
   }
@@ -31,11 +33,6 @@ export class DeviceController {
   @Get('/free-and-active')
   async getFreeAndActiveDevices() {
     return await this.deviceService.getFreeAndActiveDevices();
-  }
-  
-  @Get(':id')
-  public async getDeviceById(@Param('id') id: number) {
-    return await this.deviceService.getDeviceById(id);
   }
 
   @Roles(ROLE.ADMIN)
@@ -54,5 +51,15 @@ export class DeviceController {
   @Patch('delete/:id')
   async delete(@Param('id') id: number) {
     return await this.deviceService.delete(id);
+  }
+
+  @Get('export')
+  async exportExcel(@Res() res: Response) {
+    return await this.deviceService.exportExcel(res);
+  }
+
+  @Get(':id')
+  public async getDeviceById(@Param('id') id: number) {
+    return await this.deviceService.getDeviceById(id);
   }
 }

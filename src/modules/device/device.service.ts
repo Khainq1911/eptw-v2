@@ -5,12 +5,15 @@ import { Not, Repository } from 'typeorm';
 import { CreateDeviceDto, DeviceDto, FilterDto } from './device.dto';
 import AppDataSource from '@/database/data-source';
 import { DEVICE_STATUS, DEVICE_STATUS_ALIAS } from '@/common/enum';
+import { ExcelService } from '../excel/excel.service';
+import { Response } from 'express';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(DeviceEntity)
     private readonly deviceRepository: Repository<DeviceEntity>,
+    private readonly excelService: ExcelService,
   ) {}
 
   async create(device: CreateDeviceDto): Promise<{ message: string }> {
@@ -149,5 +152,33 @@ export class DeviceService {
           : 'Chưa sử dụng',
       count: +item.count,
     }));
+  }
+
+  async exportExcel(res: Response) {
+    const devices = await this.deviceRepository.find();
+
+    const headers = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Name', key: 'name', width: 30 },
+      { header: 'Code', key: 'code', width: 30 },
+      { header: 'Description', key: 'description', width: 30 },
+      { header: 'Status', key: 'status', width: 30 },
+      { header: 'IsUsed', key: 'isUsed', width: 30 },
+      { header: 'CreatedAt', key: 'createdAt', width: 30 },
+      { header: 'UpdatedAt', key: 'updatedAt', width: 30 },
+    ];
+
+    const data = devices.map((device) => ({
+      id: device.id,
+      name: device.name,
+      code: device.code,
+      description: device.description,
+      status: device.status,
+      isUsed: device.isUsed ? 'Đang sử dụng' : 'Chưa sử dụng',
+      createdAt: device.createdAt,
+      updatedAt: device.updatedAt,
+    }));
+
+    return this.excelService.exportExcel(res, headers, data, 'devices.xlsx');
   }
 }

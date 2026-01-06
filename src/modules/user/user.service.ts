@@ -60,6 +60,7 @@ export class UserService {
       email: user.email,
       phone: user.phone,
       roleId: user.role.id,
+      roleName: user.role.name,
     }));
   }
 

@@ -1,11 +1,17 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Res } from '@nestjs/common';
 import { PermitService } from './permit.service';
 import { filterDto, permitDto } from './permit.dto';
 import { User } from '@/common/decorators/user.decorator';
+import { Response } from 'express';
 
 @Controller('permit')
 export class PermitController {
   constructor(private readonly permitService: PermitService) {}
+
+  @Get('/export')
+  async exportExcel(@Res() res: Response) {
+    return await this.permitService.exportExcel(res);
+  }
 
   @Post()
   async create(@Body() payload: permitDto, @User() user: any) {

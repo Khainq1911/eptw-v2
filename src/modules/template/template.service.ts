@@ -5,13 +5,16 @@ import { DataSource, ILike, IsNull, Not, Repository } from 'typeorm';
 import { UserJwtPayloadDto } from '../auth/auth.dto';
 import { TemplateDto, UpdateTemplateDto } from './template.dto';
 import { QueryDto } from '@/common/constants';
+import { HeaderDto } from '../excel/excel.dto';
+import { ExcelService } from '../excel/excel.service';
+import { Response } from 'express';
 
 @Injectable()
 export class TemplateService {
   constructor(
     @InjectRepository(TemplateEntity)
     private readonly templateRepository: Repository<TemplateEntity>,
-
+    private readonly excelService: ExcelService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -204,5 +207,38 @@ export class TemplateService {
       name: item.name,
       count: +item.count,
     }));
+  }
+
+  async exportExcel(res: Response) {
+    const headers: HeaderDto[] = [
+      { header: 'id', key: 'id', width: 10 },
+      { header: 'name', key: 'name', width: 20 },
+      { header: 'templateType', key: 'templateType', width: 20 },
+      { header: 'approvalType', key: 'approvalType', width: 20 },
+      { header: 'createdAt', key: 'createdAt', width: 20 },
+      { header: 'createdBy', key: 'createdBy', width: 20 },
+      { header: 'updatedBy', key: 'updatedBy', width: 20 },
+    ];
+
+    const templates = await this.templateRepository.find({
+      relations: ['approvalType', 'templateType', 'createdBy', 'updatedBy'],
+    });
+
+    const data = templates.map((t) => ({
+      id: t.id,
+      name: t.name,
+      templateType: t.templateType?.name,
+      approvalType: t.approvalType?.name,
+      createdAt: t.createdAt,
+      createdBy: t.createdBy?.name,
+      updatedBy: t.updatedBy?.name,
+    }));
+
+    return await this.excelService.exportExcel(
+      res,
+      headers,
+      data,
+      'template.xlsx',
+    );
   }
 }

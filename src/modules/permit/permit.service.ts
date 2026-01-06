@@ -30,6 +30,9 @@ import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
 import { RoleService } from '../role/role.service';
 import { Cron } from '@nestjs/schedule';
+import { Response } from 'express';
+import { ExcelService } from '../excel/excel.service';
+import { HeaderDto } from '../excel/excel.dto';
 
 @Injectable()
 export class PermitService {
@@ -41,7 +44,44 @@ export class PermitService {
     private readonly templateService: TemplateService,
     private readonly redisService: RedisService,
     private readonly roleService: RoleService,
+    private readonly excelService: ExcelService,
   ) {}
+
+  async exportExcel(res: Response) {
+    const permit = await this.permitRepository.find({
+      relations: [
+        'workActivities',
+        'devices',
+        'createdBy',
+        'template',
+        'attachments',
+      ],
+    });
+
+    const headers: HeaderDto[] = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Tên', key: 'name', width: 20 },
+      { header: 'Tên giấy phép', key: 'templateName', width: 20 },
+      { header: 'Thiết bị', key: 'devices', width: 20 },
+      { header: 'Hoạt động', key: 'workActivities', width: 20 },
+      { header: 'Ngày bắt đầu', key: 'startTime', width: 20 },
+      { header: 'Ngày kết thúc', key: 'endTime', width: 20 },
+      { header: 'Trạng thái', key: 'status', width: 20 },
+    ];
+
+    const data = permit.map((p) => ({
+      id: p.id,
+      name: p.name,
+      templateName: p.template?.name,
+      devices: p.devices.map((d) => d.name).join(', '),
+      workActivities: p.workActivities.map((w) => w.name).join(', '),
+      startTime: p.startTime,
+      endTime: p.endTime,
+      status: p.status,
+    }));
+
+    return this.excelService.exportExcel(res, headers, data, 'permit.xlsx');
+  }
 
   async create(payload: permitDto, user: any) {
     const { workActivityIds, deviceIds, templateId, attachments, ...data } =

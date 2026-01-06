@@ -6,6 +6,7 @@ export class userDto {
   email: string;
   phone: string;
   roleId: number;
+  roleName?: string;
 }
 
 export class userFilterDto {
