@@ -10,6 +10,7 @@ import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
 import { RedisModule } from '../redis/redis.module';
 import { RoleModule } from '../role/role.module';
+import { ExcelModule } from '../excel/excel.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RoleModule } from '../role/role.module';
     ]),
     RedisModule,
     RoleModule,
+    ExcelModule
   ],
   controllers: [PermitController],
   providers: [PermitService, MailService, TemplateService],

@@ -6,7 +6,7 @@ import {
   Patch,
   Post,
   Put,
-  Query,
+  Res,
 } from '@nestjs/common';
 import { TemplateService } from './template.service';
 import { User } from '@/common/decorators/user.decorator';
@@ -15,10 +15,16 @@ import { UserJwtPayloadDto } from '../auth/auth.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { ROLE } from '@/common/enum';
 import { QueryDto } from '@/common/constants';
+import { Response } from 'express';
 
 @Controller('template')
 export class TemplateController {
   constructor(private readonly templateService: TemplateService) {}
+
+  @Get('/export')
+  async exportExcel(@Res() res: Response) {
+    return await this.templateService.exportExcel(res);
+  }
 
   @Roles(ROLE.ADMIN)
   @Post('')

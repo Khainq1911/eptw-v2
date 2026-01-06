@@ -27,7 +27,7 @@ export class ExcelService {
     res.send(buffer);
   }
 
-  async importExcel(buffer: Buffer) {
+  async importExcel(buffer: any) {
     const workbook = new ExcelJS.Workbook();
     const result: object[] = [];
 
