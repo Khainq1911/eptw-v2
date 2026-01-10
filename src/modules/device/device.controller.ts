@@ -35,6 +35,11 @@ export class DeviceController {
     return await this.deviceService.getFreeAndActiveDevices();
   }
 
+  @Get('/location')
+  async getListDevicePosition() {
+    return await this.deviceService.getListDevicePosition();
+  }
+
   @Roles(ROLE.ADMIN)
   @Post('create')
   async create(@Body() deviceDto: DeviceDto) {

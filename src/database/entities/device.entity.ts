@@ -16,6 +16,9 @@ export class DeviceEntity extends BaseEntity {
   @Column({ name: 'description', nullable: true })
   description: string;
 
+  @Column({ name: 'location', nullable: true, type: 'jsonb' })
+  location: object;
+
   @Column({ name: 'status', nullable: false, default: 'Available' })
   status: string;
 
