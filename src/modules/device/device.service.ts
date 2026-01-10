@@ -154,6 +154,19 @@ export class DeviceService {
     }));
   }
 
+  async getListDevicePosition() {
+    const devices = await this.deviceRepository.find();
+
+    const res = devices.map((device) => ({
+      id: device.id,
+      name: device.name,
+      code: device.code,
+      location: device.location,
+    }));
+
+    return res;
+  }
+
   async exportExcel(res: Response) {
     const devices = await this.deviceRepository.find();
 

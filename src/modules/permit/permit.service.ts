@@ -202,7 +202,7 @@ export class PermitService {
       relations: ['signer'],
     });
 
-    const template = await this.templateService.findOne(permit.template.id);
+    const template = await this.templateService.findOne(permit.template?.id);
 
     const approvalTypeCode = template?.approvalType?.code;
 
