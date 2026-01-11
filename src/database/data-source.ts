@@ -1,18 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 import 'dotenv/config';
-import {
-  ApprovalTypeEntity,
-  DeviceEntity,
-  RoleEntity,
-  TemplateEntity,
-  TemplateTypeEntity,
-  UserEntity,
-} from './entities';
-import { PermitEntity } from './entities/permit.entity';
-import { PermitFileEntity } from './entities/permit-file.entity';
-import { WorkActivityEntity } from './entities/work-activity.entity';
-import { PermitSignEntity } from './entities/permit-sign.entity';
+
 const options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
   host: process.env.POSTGRES_HOST,
@@ -20,19 +9,8 @@ const options: DataSourceOptions & SeederOptions = {
   username: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
-  entities: [
-    UserEntity,
-    RoleEntity,
-    DeviceEntity,
-    TemplateEntity,
-    ApprovalTypeEntity,
-    TemplateTypeEntity,
-    PermitEntity,
-    PermitFileEntity,
-    WorkActivityEntity,
-    PermitSignEntity,
-  ],
-  migrations: ['src/database/migrations/*.{ts,js}'],
+  entities: [__dirname + 'entities/**/*.entity.{ts,js}'],
+  migrations: [__dirname + '/migrations/*.{ts,js}'],
   seeds: ['src/database/seeders/*.{ts,js}'],
 };
 
