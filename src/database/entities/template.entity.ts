@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { ApprovalTypeEntity } from './approval-type.entity';
-import { UserEntity } from './user.entities';
 import { TemplateTypeEntity } from './template-type.entity';
+import { UserEntity } from './user.entity';
 
 @Entity({ name: 'template' })
 export class TemplateEntity extends BaseEntity {

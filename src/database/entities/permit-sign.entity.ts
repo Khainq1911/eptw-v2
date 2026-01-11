@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PermitEntity } from './permit.entity';
-import { UserEntity } from './user.entities';
+import { UserEntity } from './user.entity';
 
 @Entity({ name: 'permit_sign' })
 export class PermitSignEntity {

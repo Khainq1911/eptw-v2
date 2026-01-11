@@ -19,7 +19,7 @@ export class DeviceEntity extends BaseEntity {
   @Column({ name: 'location', nullable: true, type: 'jsonb' })
   location: object;
 
-  @Column({ name: 'status', nullable: false, default: 'Available' })
+  @Column({ name: 'status', nullable: false, default: 'active' })
   status: string;
 
   @ManyToMany(() => PermitEntity, (permit) => permit.devices)
