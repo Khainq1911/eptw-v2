@@ -150,7 +150,7 @@ export class PermitService {
             );
           }
 
-          /* await this.mailService.sendMail({
+          await this.mailService.sendMail({
             email: signUser.email,
             subject: 'Sign Permit Request',
             template: 'sign-permit',
@@ -159,9 +159,9 @@ export class PermitService {
               createdTime: new Date().toLocaleString(),
               signerName: signUser.name,
               permitName: permitEntity.name,
-              permitLink: `https://yourapp.com/permits/${permitEntity.id}`,
+              permitLink: `${process.env.FRONTEND_URL}/permit/view/${permitEntity.id}`,
             },
-          }); */
+          }); 
         }
       }
 
@@ -463,7 +463,7 @@ export class PermitService {
         template: 'sign-success',
         context: {
           time: new Date().toLocaleString(),
-          documentUrl: `http://localhost:5173/permit/view/${payload.permitId}`,
+          documentUrl: `${process.env.FRONTEND_URL}/permit/view/${payload.permitId}`,
         },
       });
 
