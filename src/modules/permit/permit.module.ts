@@ -7,7 +7,6 @@ import { WorkActivityEntity } from '@/database/entities/work-activity.entity';
 import { DeviceEntity, TemplateEntity } from '@/database/entities';
 import { MailService } from '../mailer/mail.service';
 import { TemplateService } from '../template/template.service';
-import { RedisService } from '../redis/redis.service';
 import { RedisModule } from '../redis/redis.module';
 import { RoleModule } from '../role/role.module';
 import { ExcelModule } from '../excel/excel.module';
