@@ -14,7 +14,7 @@ export class ApprovalTypeEntity {
   })
   name: string;
 
-  @Column({ name: 'code'})
+  @Column({ name: 'code', type: 'varchar', length: 10, nullable: false })
   code: string;
 
   @Column({ name: 'description', type: 'text', nullable: true })
