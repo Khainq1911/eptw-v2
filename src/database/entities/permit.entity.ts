@@ -14,6 +14,7 @@ import { UserEntity } from './user.entity';
 import { PermitFileEntity } from './permit-file.entity';
 import { TemplateEntity } from './template.entity';
 import { PermitSignEntity } from './permit-sign.entity';
+import { PermitLogEntity } from './permit-log.entity';
 
 @Entity({ name: 'permit' })
 export class PermitEntity extends BaseEntity {
@@ -62,6 +63,9 @@ export class PermitEntity extends BaseEntity {
   @OneToMany(() => PermitFileEntity, (file) => file.permit)
   attachments: PermitFileEntity[];
 
+  @OneToMany(() => PermitLogEntity, (permitLog) => permitLog.permit)
+  permitLogs: PermitLogEntity[];
+  
   @ManyToMany(() => WorkActivityEntity)
   @JoinTable({
     name: 'permit_work_activity',

@@ -1,7 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { RoleEntity } from './role.entity';
 import { Exclude } from 'class-transformer';
+import { PermitLogEntity } from './permit-log.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity extends BaseEntity {
@@ -25,6 +26,9 @@ export class UserEntity extends BaseEntity {
     type: 'text',
   })
   refreshToken: string;
+
+  @OneToMany(() => PermitLogEntity, (permitLog) => permitLog.user)
+  permitLogs: PermitLogEntity[];
 
   @ManyToOne(() => RoleEntity)
   @JoinColumn({ name: 'role_id' })
