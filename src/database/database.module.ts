@@ -13,6 +13,8 @@ import { PermitEntity } from './entities/permit.entity';
 import { PermitFileEntity } from './entities/permit-file.entity';
 import { WorkActivityEntity } from './entities/work-activity.entity';
 import { PermitSignEntity } from './entities/permit-sign.entity';
+import { PermitLogEntity } from './entities/permit-log.entity';
+import { MenuEntity } from './entities/menu.entity';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { PermitSignEntity } from './entities/permit-sign.entity';
           PermitFileEntity,
           WorkActivityEntity,
           PermitSignEntity,
+          PermitLogEntity,
+          MenuEntity,
         ],
         synchronize: false,
       }),

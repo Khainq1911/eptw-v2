@@ -1,6 +1,7 @@
-import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
+import { Column, Entity, ManyToMany} from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { RoleEntity } from './role.entity';
+
 
 @Entity({ name: 'menu' })
 export class MenuEntity extends BaseEntity {
@@ -19,4 +20,6 @@ export class MenuEntity extends BaseEntity {
   @Column({ nullable: true })
   parent_id: string;
 
+  @ManyToMany(() => RoleEntity, (role) => role.menus)
+  roles: RoleEntity[];
 }
