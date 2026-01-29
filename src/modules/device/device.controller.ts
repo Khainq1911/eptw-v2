@@ -40,19 +40,19 @@ export class DeviceController {
     return await this.deviceService.getListDevicePosition();
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles([ROLE.ADMIN])
   @Post('create')
   async create(@Body() deviceDto: DeviceDto) {
     return await this.deviceService.create(deviceDto);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles([ROLE.ADMIN])
   @Post('update/:id')
   async update(@Body() deviceDto: DeviceDto, @Param('id') id: number) {
     return await this.deviceService.update(deviceDto, id);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles([ROLE.ADMIN])
   @Patch('delete/:id')
   async delete(@Param('id') id: number) {
     return await this.deviceService.delete(id);

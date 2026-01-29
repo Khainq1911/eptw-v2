@@ -7,7 +7,7 @@ import { ROLE } from './common/enum';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Roles(ROLE.ADMIN)
+  @Roles([ROLE.ADMIN])
   @Get()
   getHello(): string {
     return this.appService.getHello();

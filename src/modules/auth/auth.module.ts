@@ -15,7 +15,7 @@ import { RolesGuard } from './guard/roles.guard';
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       global: true,
-      signOptions: { expiresIn: Number(process.env.JWT_EXPIRATION) },
+      signOptions: { expiresIn: "1h" },
     }),
     MailModule,
   ],
@@ -32,4 +32,4 @@ import { RolesGuard } from './guard/roles.guard';
     },
   ],
 })
-export class AuthModule {}
+export class AuthModule { }

@@ -26,15 +26,15 @@ export class TemplateController {
     return await this.templateService.exportExcel(res);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles([ROLE.ADMIN])
   @Post('')
   async create(@User() user: UserJwtPayloadDto, @Body() body: TemplateDto) {
     return await this.templateService.create(user, body);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles([ROLE.ADMIN])
   @Put('/:id')
-  async update(
+  async update( 
     @User() user: UserJwtPayloadDto,
     @Param('id') id: number,
     @Body() body: UpdateTemplateDto,
@@ -42,8 +42,8 @@ export class TemplateController {
     return await this.templateService.update(id, user, body);
   }
 
-  @Roles(ROLE.ADMIN)
-  @Patch('delete/:id')
+  @Roles([ROLE.ADMIN])  
+  @Patch('delete/:id')  
   async delete(@User() user: UserJwtPayloadDto, @Param('id') id: number) {
     return await this.templateService.delete(id, user);
   }
