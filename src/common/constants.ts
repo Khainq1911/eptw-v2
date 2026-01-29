@@ -21,8 +21,6 @@ export class PERMIT_STATUS {
 export class ROLE_TYPE {
   static readonly ADMIN = 'Admin';
   static readonly WORKER = 'Worker';
-  static readonly SUPERVISOR = 'Supervisor';
-  static readonly ISSUER = 'Issuer';
 }
 
 

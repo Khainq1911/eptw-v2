@@ -1,8 +1,6 @@
 export enum ROLE {
-  WORKER = 1,
-  SUPERVISOR = 2,
-  PERMIT_ISSUER = 3,
-  ADMIN = 4,
+  WORKER = 2,
+  ADMIN = 1,
 }
 
 export enum DEVICE_STATUS {
