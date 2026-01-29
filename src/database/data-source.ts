@@ -1,6 +1,9 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 import 'dotenv/config';
+import RoleSeeder from './seeders/role.seeder';
+import UserSeeder from './seeders/user.seeder';
+import ApprovalTypeSeeder from './seeders/approval-type.seeder';
 
 const options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
@@ -11,7 +14,7 @@ const options: DataSourceOptions & SeederOptions = {
   database: process.env.POSTGRES_DB,
   entities: [__dirname + '/entities/**/*.entity.{ts,js}'],
   migrations: [__dirname + '/migrations/*.{ts,js}'],
-  seeds: [__dirname + '/seeders/*.{ts,js}'],
+  seeds: [RoleSeeder, UserSeeder, ApprovalTypeSeeder],
 };
 
 const AppDataSource = new DataSource(options);
