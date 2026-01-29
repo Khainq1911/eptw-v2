@@ -18,19 +18,19 @@ export class S3ClientService {
   private readonly signBucketName: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.attachmentFileBucketName = this.configService.getOrThrow(
+    this.attachmentFileBucketName = this.configService.get<string>(
       'AWS_S3_ATTACHMENT_FILE_BUCKET_NAME',
-    );
-    this.signBucketName = this.configService.getOrThrow(
+    )!;
+    this.signBucketName = this.configService.get<string>(
       'AWS_S3_SIGN_BUCKET_NAME',
-    );
+    )!;
 
     this.s3Client = new S3Client({
-      region: this.configService.getOrThrow('AWS_S3_REGION'),
-      endpoint: this.configService.getOrThrow('AWS_S3_ENDPOINT'),
+      region: this.configService.get<string>('AWS_S3_REGION'),
+      endpoint: this.configService.get<string>('AWS_S3_ENDPOINT'),
       credentials: {
-        accessKeyId: this.configService.getOrThrow('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow('AWS_SECRET_ACCESS_KEY'),
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID')!,
+        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY')!,
       },
       forcePathStyle: true,
     });
@@ -74,7 +74,7 @@ export class S3ClientService {
         }),
       );
 
-      const baseUrl = this.configService.getOrThrow('AWS_S3_ENDPOINT');
+      const baseUrl = this.configService.get<string>('AWS_S3_ENDPOINT');
       const fileUrl = `${baseUrl}/${bucketName}/${key}`;
       return {
         key: key,
