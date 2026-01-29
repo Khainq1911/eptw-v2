@@ -11,7 +11,7 @@ const options: DataSourceOptions & SeederOptions = {
   database: process.env.POSTGRES_DB,
   entities: [__dirname + '/entities/**/*.entity.{ts,js}'],
   migrations: [__dirname + '/migrations/*.{ts,js}'],
-  seeds: ['src/database/seeders/*.{ts,js}'],
+  seeds: [__dirname + '/seeders/*.{ts,js}'],
 };
 
 const AppDataSource = new DataSource(options);
