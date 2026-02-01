@@ -1,45 +1,36 @@
 ##### Dockerfile #####
 
 ## build stage ##
-FROM node:24.4.1-alpine AS development
+FROM node:24-alpine AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
+# copy package trước để cache layer
 COPY package*.json ./
 
-# Cài công cụ build
-RUN npm install glob rimraf
+RUN npm install
 
-# Cài dependencies dev
-RUN npm install --only=development
-
-# Copy toàn bộ source
 COPY . .
 
-# Build NestJS
 RUN npm run build
 
 
 ## run stage ##
-FROM node:24.4.1-alpine AS production
+FROM node:24-alpine AS production
 
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+WORKDIR /app
 
-WORKDIR /usr/src/app
+ENV NODE_ENV=production
 
 COPY package*.json ./
 
-# Chỉ cài dependencies production
-RUN npm install --only=production
+# chỉ cài production deps
+RUN npm install --omit=dev
 
-# Copy toàn bộ source (NOT recommended nếu không cần)
-COPY . .
+# chỉ copy dist + node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
-# Copy dist từ stage build
-COPY --from=development /usr/src/app/dist ./dist
-
-# 👇 Thêm expose port NestJS mặc định
 EXPOSE 3000
 
 CMD ["node", "dist/main.js"]
