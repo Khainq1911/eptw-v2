@@ -38,5 +38,18 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/eptw-v2:latest
   
- 
-    
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd /eptw-be
+            docker compose pull
+            docker compose up -d --build
+            docker image prune -f
