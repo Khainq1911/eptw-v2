@@ -25,6 +25,13 @@ export class S3ClientService {
       'AWS_S3_SIGN_BUCKET_NAME',
     )!;
 
+    console.log("AWS_S3_REGION",this.configService.get<string>('AWS_S3_REGION'));
+    console.log("AWS_S3_ENDPOINT",this.configService.get<string>('AWS_S3_ENDPOINT'));
+    console.log("AWS_ACCESS_KEY_ID",this.configService.get<string>('AWS_ACCESS_KEY_ID'));
+    console.log("AWS_SECRET_ACCESS_KEY",this.configService.get<string>('AWS_SECRET_ACCESS_KEY'));
+    console.log("AWS_S3_ATTACHMENT_FILE_BUCKET_NAME",this.configService.get<string>('AWS_S3_ATTACHMENT_FILE_BUCKET_NAME'));
+    console.log("AWS_S3_SIGN_BUCKET_NAME",this.configService.get<string>('AWS_S3_SIGN_BUCKET_NAME'));
+
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_S3_REGION'),
       endpoint: this.configService.get<string>('AWS_S3_ENDPOINT'),

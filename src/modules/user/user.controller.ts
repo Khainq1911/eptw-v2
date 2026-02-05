@@ -20,7 +20,7 @@ export class UserController {
     return await this.userService.getAll();
   }
 
-  @Roles([ROLE.WORKER])
+  @Roles([ROLE.ADMIN])
   @Post('filter')
   async getUserWithFilter(@Body() payload: userFilterDto) {
     return await this.userService.getUserWithFilter(payload);
