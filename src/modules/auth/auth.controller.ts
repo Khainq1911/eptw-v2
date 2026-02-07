@@ -2,17 +2,19 @@ import { Body, Controller, Post, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './auth.dto';
 import { Public } from '@/common/decorators/auth.decorator';
+import { ROLE } from '@/common/enum';
+import { Roles } from '@/common/decorators/roles.decorator';
 
-@Public()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
+  
+  @Public()
   @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<any> {
     return await this.authService.loginService(loginDto);
   }
-
+  @Roles([ROLE.ADMIN])
   @Post('register')
   async register(@Body() registerDto: RegisterDto): Promise<any> {
     return await this.authService.registerService(registerDto);

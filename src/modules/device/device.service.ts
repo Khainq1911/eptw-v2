@@ -31,28 +31,22 @@ export class DeviceService {
   }
 
   async list(filter: FilterDto) {
-    const countActiveDevice = await this.deviceRepository.count({
-      where: { status: DEVICE_STATUS.ACTIVE },
-    });
-
-    const countInactiveDevice = await this.deviceRepository.count({
-      where: { status: DEVICE_STATUS.MAINTAIN },
-    });
-
     const countIsUsedDevice = await this.deviceRepository.count({
       where: { isUsed: true },
     });
 
     const qb = AppDataSource.getRepository(DeviceEntity)
       .createQueryBuilder('device')
-      .orderBy('device.updatedAt', 'DESC')
+      .orderBy('device.name', 'ASC')
       .limit(filter.limit)
       .offset((filter.page - 1) * filter.limit);
 
-    if (filter.query) {
-      qb.andWhere('(device.name = :query OR device.code = :query)', {
-        query: filter.query,
-      });
+    if (filter.query?.trim()) {
+      const search = `%${filter.query.trim()}%`;
+      qb.andWhere(
+        '(device.name ILIKE :search OR device.code ILIKE :search)',
+        { search },
+      );
     }
 
     if (filter.status) {
@@ -64,6 +58,9 @@ export class DeviceService {
     }
 
     const [devices, number] = await qb.getManyAndCount();
+
+    const countActiveDevice = devices.filter((device) => device.status === DEVICE_STATUS.ACTIVE).length;
+    const countInactiveDevice = devices.filter((device) => device.status === DEVICE_STATUS.MAINTAIN).length;
 
     return {
       devices,
