@@ -28,6 +28,9 @@ import { MenuEntity } from './entities/menu.entity';
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
+        extra: {
+          options: '-c timezone=Asia/Ho_Chi_Minh',
+        },
         entities: [
           UserEntity,
           RoleEntity,
@@ -47,4 +50,4 @@ import { MenuEntity } from './entities/menu.entity';
     }),
   ],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }

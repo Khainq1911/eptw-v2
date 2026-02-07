@@ -1,5 +1,8 @@
 import { FindOptionsOrderValue } from 'typeorm';
 
+/** Vietnam timezone (Asia/Ho_Chi_Minh) for dates and DB session */
+export const APP_TIMEZONE = 'Asia/Ho_Chi_Minh';
+
 export class QueryDto {
   templateTypeId?: number;
   status?: string;

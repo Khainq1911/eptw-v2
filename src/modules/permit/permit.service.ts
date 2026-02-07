@@ -25,7 +25,7 @@ import { MailService } from '../mailer/mail.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PermitFileEntity } from '@/database/entities/permit-file.entity';
 import { PermitSignEntity } from '@/database/entities/permit-sign.entity';
-import { APPROVAL_TYPE, PERMIT_STATUS } from '@/common/constants';
+import { APP_TIMEZONE, APPROVAL_TYPE, PERMIT_STATUS } from '@/common/constants';
 import { TemplateService } from '../template/template.service';
 import { RedisService } from '../redis/redis.service';
 import { RoleService } from '../role/role.service';
@@ -156,7 +156,7 @@ export class PermitService {
             template: 'sign-permit',
             context: {
               creatorName: user.name,
-              createdTime: new Date().toLocaleString(),
+              createdTime: new Date().toLocaleString('vi-VN', { timeZone: APP_TIMEZONE }),
               signerName: signUser.name,
               permitName: permitEntity.name,
               permitLink: `${process.env.FRONTEND_URL}/permit/view/${permitEntity.id}`,
@@ -462,7 +462,7 @@ export class PermitService {
         subject: 'Ký tài liệu thành công',
         template: 'sign-success',
         context: {
-          time: new Date().toLocaleString(),
+          time: new Date().toLocaleString('vi-VN', { timeZone: APP_TIMEZONE }),
           documentUrl: `${process.env.FRONTEND_URL}/permit/view/${payload.permitId}`,
         },
       });
