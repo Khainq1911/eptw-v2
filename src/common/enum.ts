@@ -5,13 +5,13 @@ export enum ROLE {
 
 export enum DEVICE_STATUS {
   ACTIVE = 'active',
-  MAINTAIN = 'maintain',
+  MAINTAIN = 'inactive',
   DELETED = 'deleted',
 }
 
 export enum DEVICE_STATUS_ALIAS {
   ACTIVE = 'Active',
-  MAINTAIN = 'Under Maintenance',
+  MAINTAIN = 'Inactive',
   DELETED = 'Deleted',
 }
 
