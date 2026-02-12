@@ -33,6 +33,8 @@ import { Cron } from '@nestjs/schedule';
 import { Response } from 'express';
 import { ExcelService } from '../excel/excel.service';
 import { HeaderDto } from '../excel/excel.dto';
+import { PermitLogService } from '../permit-log/permit-log.service';
+import { PermitLogEntity } from '@/database/entities/permit-log.entity';
 
 @Injectable()
 export class PermitService {
@@ -45,7 +47,8 @@ export class PermitService {
     private readonly redisService: RedisService,
     private readonly roleService: RoleService,
     private readonly excelService: ExcelService,
-  ) {}
+    private readonly permitLogService: PermitLogService,
+  ) { }
 
   async exportExcel(res: Response) {
     const permit = await this.permitRepository.find({
@@ -161,9 +164,16 @@ export class PermitService {
               permitName: permitEntity.name,
               permitLink: `${process.env.FRONTEND_URL}/permit/view/${permitEntity.id}`,
             },
-          }); 
+          });
         }
       }
+
+      await manager.save(PermitLogEntity, {
+        permit: permitEntity,
+        action: 'Create',
+        comment: `Tạo mới permit ${permitEntity.name}`,
+        user: user,
+      });
 
       return { message: 'Permit created successfully', permit: permitEntity };
     });
@@ -440,7 +450,7 @@ export class PermitService {
         throw new NotFoundException('Phần ký không tồn tại');
       }
 
-      if (sign.signedAt !== null) {
+      if (sign.status !== 'Pending' || sign.signUrl !== null) {
         throw new BadRequestException('Bạn đã ký tài liệu này rồi');
       }
 
@@ -487,6 +497,13 @@ export class PermitService {
         permit.status = PERMIT_STATUS.APPROVED;
         await manager.save(permit);
       }
+
+      await manager.save(PermitLogEntity, {
+        permit: { id: payload.permitId },
+        action: 'Sign',
+        comment: `Ký section ${payload.sectionId}`,
+        user: user,
+      });
 
       return {
         sign: newSign,
@@ -574,6 +591,13 @@ export class PermitService {
         attachmentEntities,
       );
 
+      await manager.save(PermitLogEntity, {
+        permit: newPermit,
+        action: 'Update',
+        comment: `Cập nhật permit #${newPermit.id}`,
+        user: user,
+      });
+
       return {
         attachments: newAttachmentsEntity,
       };
@@ -636,7 +660,7 @@ export class PermitService {
         .where({ id: payload.permitId })
         .execute();
 
-      const permit = await this.permitRepository.findOne({
+      const permit = await manager.findOne(PermitEntity, {
         where: { id: payload.permitId },
         relations: ['createdBy'],
       });
@@ -663,99 +687,123 @@ export class PermitService {
         });
       }
 
+      await manager.save(PermitLogEntity, {
+        permit: { id: payload.permitId },
+        action: 'RejectSection',
+        comment: payload?.reason,
+        user: permitSign.signer,
+      });
+
       return { permitStatus: PERMIT_STATUS.REJECTED, sign: newSign };
     });
   }
 
   public async updatePermitStatus(payload: any, user: any) {
-    const permit = await this.permitRepository.findOne({
-      where: { id: payload.permitId },
-      relations: ['createdBy'],
+    return await this.dataSource.transaction(async (manager) => {
+      const permit = await manager.findOne(PermitEntity, {
+        where: { id: payload.permitId },
+        relations: ['createdBy'],
+      });
+
+      if (!permit) {
+        throw new NotFoundException('Permit not found');
+      }
+
+      const adminRole = await this.roleService.getAdminRoleId();
+
+      if (user.id !== permit?.createdBy.id || user.roleId !== adminRole?.id) {
+        throw new BadRequestException(
+          'Bạn không có quyền thực hiện hành động này',
+        );
+      }
+
+      const newPermit = await manager.save(PermitEntity, {
+        ...permit,
+        status: payload.status,
+        updatedBy: user,
+      });
+
+      await manager.save(PermitLogEntity, {
+        permit: permit,
+        action: payload.status,
+        comment: payload?.comment,
+        user: user,
+      });
+
+      await this.mailService.sendMail({
+        email: permit.createdBy?.email,
+        subject: `Section bị từ chối - Permit #${permit.id}`,
+        template: 'reject-permit',
+        context: {
+          receiverName: permit.createdBy?.name,
+          permitCode: permit.id,
+          rejectedBy: user.name,
+          permitStatus: PERMIT_STATUS.REJECTED,
+        },
+      });
+      return newPermit;
     });
-
-    if (!permit) {
-      throw new NotFoundException('Permit not found');
-    }
-
-    const adminRole = await this.roleService.getAdminRoleId();
-
-    if (user.id !== permit?.createdBy.id || user.roleId !== adminRole?.id) {
-      throw new BadRequestException(
-        'Bạn không có quyền thực hiện hành động này',
-      );
-    }
-
-    const newPermit = await this.permitRepository.save({
-      ...permit,
-      status: payload.status,
-      updatedBy: user,
-    });
-
-    await this.mailService.sendMail({
-      email: permit.createdBy?.email,
-      subject: `Section bị từ chối - Permit #${permit.id}`,
-      template: 'reject-permit',
-      context: {
-        receiverName: permit.createdBy?.name,
-        permitCode: permit.id,
-        updatedBy: user.name,
-        newStatus: payload.status,
-      },
-    });
-
-    return newPermit;
   }
 
   public async rejectPermit(payload: any, user: any) {
-    const permit = await this.permitRepository.findOne({
-      where: { id: payload.permitId },
-      relations: ['createdBy'],
+    return await this.dataSource.transaction(async (manager) => {
+      const permit = await manager.findOne(PermitEntity, {
+        where: { id: payload.permitId },
+        relations: ['createdBy'],
+      });
+
+      if (!permit) {
+        throw new NotFoundException('Permit not found');
+      }
+
+      const signers = await manager.find(PermitSignEntity, {
+        where: { permit: { id: payload.permitId } },
+        relations: ['signer'],
+      });
+
+      const signerIds = signers.map((s) => s.signer.id);
+
+      const adminRole = await this.roleService.getAdminRoleId();
+
+      if (
+        user.id !== permit?.createdBy.id ||
+        user.roleId !== adminRole?.id ||
+        (signerIds.length > 0 && !signerIds.includes(user.id))
+      ) {
+        throw new BadRequestException(
+          'Bạn không có quyền thực hiện hành động này',
+        );
+      }
+
+      const newPermit = await manager.save(PermitEntity, {
+        ...permit,
+        status: PERMIT_STATUS.REJECTED,
+        updatedBy: user,
+      });
+
+      await this.returnDevices(payload.permitId, manager);
+
+      await this.mailService.sendMail({
+        email: permit.createdBy?.email,
+        subject: `Section bị từ chối - Permit #${permit.id}`,
+        template: 'reject-permit',
+        context: {
+          receiverName: permit.createdBy?.name,
+          permitCode: permit.id,
+          rejectedBy: user.name,
+          permitStatus: PERMIT_STATUS.REJECTED,
+        },
+      });
+
+      await manager.save(PermitLogEntity, {
+        permit: permit,
+        action: 'reject',
+        comment: `Từ chối permit #${permit.id}`,
+        user: user,
+      });
+
+      return newPermit;
     });
-
-    if (!permit) {
-      throw new NotFoundException('Permit not found');
-    }
-
-    const signers = await this.dataSource.getRepository(PermitSignEntity).find({
-      where: { permit: { id: payload.permitId } },
-      relations: ['signer'],
-    });
-
-    const signerIds = signers.map((s) => s.signer.id);
-
-    const adminRole = await this.roleService.getAdminRoleId();
-
-    if (
-      user.id !== permit?.createdBy.id ||
-      user.roleId !== adminRole?.id ||
-      (signerIds.length > 0 && !signerIds.includes(user.id))
-    ) {
-      throw new BadRequestException(
-        'Bạn không có quyền thực hiện hành động này',
-      );
-    }
-
-    const newPermit = await this.permitRepository.save({
-      ...permit,
-      status: PERMIT_STATUS.REJECTED,
-      updatedBy: user,
-    });
-
-    await this.returnDevices(payload.permitId);
-
-    await this.mailService.sendMail({
-      email: permit.createdBy?.email,
-      subject: `Section bị từ chối - Permit #${permit.id}`,
-      template: 'reject-permit',
-      context: {
-        receiverName: permit.createdBy?.name,
-        permitCode: permit.id,
-        rejectedBy: user.name,
-        permitStatus: PERMIT_STATUS.REJECTED,
-      },
-    });
-
-    return newPermit;
   }
 
   private async verifyOtp(otp: number, user: any): Promise<boolean> {
@@ -779,17 +827,24 @@ export class PermitService {
       }));
   }
 
-  private async returnDevices(permitId: number) {
-    const permit = await this.permitRepository.findOne({
-      where: { id: permitId },
-      relations: ['devices'],
-    });
+  private async returnDevices(permitId: number, manager?: EntityManager) {
+    const repo = manager || this.dataSource;
+
+    const permit = await (manager
+      ? manager.findOne(PermitEntity, {
+        where: { id: permitId },
+        relations: ['devices'],
+      })
+      : this.permitRepository.findOne({
+        where: { id: permitId },
+        relations: ['devices'],
+      }));
 
     if (!permit) throw new NotFoundException('Permit not found');
 
     const deviceIds = permit.devices.map((d) => d.id);
 
-    const devices = await this.dataSource.getRepository(DeviceEntity).find({
+    const devices = await repo.getRepository(DeviceEntity).find({
       where: { id: In(deviceIds) },
     });
 
@@ -802,7 +857,7 @@ export class PermitService {
       isUsed: false,
     }));
 
-    await this.dataSource.getRepository(DeviceEntity).save(updatedDevices);
+    await repo.getRepository(DeviceEntity).save(updatedDevices);
 
     return devices;
   }
