@@ -488,6 +488,7 @@ export class PermitService {
       if (pendingSigns === 0) {
         const permit = await manager.findOne(PermitEntity, {
           where: { id: payload.permitId },
+          relations: ['createdBy'],
         });
 
         if (!permit) {
@@ -496,6 +497,22 @@ export class PermitService {
 
         permit.status = PERMIT_STATUS.APPROVED;
         await manager.save(permit);
+
+        // Gửi email thông báo permit đã được duyệt cho owner
+        if (permit.createdBy?.email) {
+          await this.mailService.sendMail({
+            email: permit.createdBy.email,
+            subject: `Permit đã được duyệt - Permit #${permit.id}`,
+            template: 'permit-approved',
+            context: {
+              receiverName: permit.createdBy.name,
+              permitCode: permit.id,
+              permitName: permit.name,
+              approvedBy: user.name,
+              permitLink: `${process.env.FRONTEND_URL}/permit/view/${permit.id}`,
+            },
+          });
+        }
       }
 
       await manager.save(PermitLogEntity, {
@@ -710,11 +727,30 @@ export class PermitService {
       }
 
       const adminRole = await this.roleService.getAdminRoleId();
+      const isAdmin = user.roleId === adminRole?.id;
+      const isCreator = user.id === permit.createdBy?.id;
 
-      if (user.id !== permit?.createdBy.id || user.roleId !== adminRole?.id) {
-        throw new BadRequestException(
-          'Bạn không có quyền thực hiện hành động này',
-        );
+      if (payload.status === PERMIT_STATUS.CLOSED) {
+        // Chỉ người ký (signer) hoặc admin mới được close permit
+        const signers = await manager.find(PermitSignEntity, {
+          where: { permit: { id: payload.permitId } },
+          relations: ['signer'],
+        });
+        const signerIds = signers.map((s) => s.signer.id);
+        const isSigner = signerIds.includes(user.id);
+
+        if (!isSigner && !isAdmin) {
+          throw new BadRequestException(
+            'Chỉ người ký hoặc admin mới có quyền đóng permit',
+          );
+        }
+      } else {
+        // Start work, Finish work, và các trạng thái khác: chỉ người tạo hoặc admin
+        if (!isCreator && !isAdmin) {
+          throw new BadRequestException(
+            'Chỉ người tạo permit hoặc admin mới có quyền thực hiện hành động này',
+          );
+        }
       }
 
       const newPermit = await manager.save(PermitEntity, {
@@ -730,17 +766,60 @@ export class PermitService {
         user: user,
       });
 
-      await this.mailService.sendMail({
-        email: permit.createdBy?.email,
-        subject: `Section bị từ chối - Permit #${permit.id}`,
-        template: 'reject-permit',
-        context: {
-          receiverName: permit.createdBy?.name,
-          permitCode: permit.id,
-          rejectedBy: user.name,
-          permitStatus: PERMIT_STATUS.REJECTED,
+      // Khi close, expired hoặc rejected permit, trả lại thiết bị (isUsed = false)
+      if (
+        [PERMIT_STATUS.CLOSED, PERMIT_STATUS.EXPIRED, PERMIT_STATUS.REJECTED].includes(payload.status)
+      ) {
+        await this.returnDevices(permit.id, manager);
+      }
+
+      // Chọn template và subject dựa trên trạng thái mới
+      const statusMailConfig: Record<string, { template: string; subject: string; contextKey: string }> = {
+        [PERMIT_STATUS.APPROVED]: {
+          template: 'permit-approved',
+          subject: `Permit đã được duyệt - Permit #${permit.id}`,
+          contextKey: 'approvedBy',
         },
-      });
+        [PERMIT_STATUS.CLOSED]: {
+          template: 'permit-closed',
+          subject: `Permit đã được đóng - Permit #${permit.id}`,
+          contextKey: 'closedBy',
+        },
+        [PERMIT_STATUS.CANCELLED]: {
+          template: 'permit-cancelled',
+          subject: `Permit đã bị hủy - Permit #${permit.id}`,
+          contextKey: 'cancelledBy',
+        },
+      };
+
+      const mailConfig = statusMailConfig[payload.status];
+
+      if (mailConfig) {
+        await this.mailService.sendMail({
+          email: permit.createdBy?.email,
+          subject: mailConfig.subject,
+          template: mailConfig.template,
+          context: {
+            receiverName: permit.createdBy?.name,
+            permitCode: permit.id,
+            permitName: permit.name,
+            [mailConfig.contextKey]: user.name,
+            permitLink: `${process.env.FRONTEND_URL}/permit/view/${permit.id}`,
+          },
+        });
+      } else {
+        await this.mailService.sendMail({
+          email: permit.createdBy?.email,
+          subject: `Cập nhật trạng thái Permit #${permit.id}`,
+          template: 'update-permit-status',
+          context: {
+            receiverName: permit.createdBy?.name,
+            permitCode: permit.id,
+            newStatus: payload.status,
+            updatedBy: user.name,
+          },
+        });
+      }
       return newPermit;
     });
   }
@@ -968,7 +1047,6 @@ export class PermitService {
 
     return await this.dataSource.transaction(async (manager) => {
       const expiredPermits = await manager.find(PermitEntity, {
-        select: ['id'],
         where: {
           endTime: LessThan(now),
           status: Not(
@@ -980,6 +1058,7 @@ export class PermitService {
             ]),
           ),
         },
+        relations: ['createdBy'],
         lock: { mode: 'pessimistic_write' },
       });
 
@@ -1012,6 +1091,28 @@ export class PermitService {
           { permitIds },
         )
         .execute();
+
+      // Gửi email thông báo hết hạn cho owner của từng permit
+      for (const permit of expiredPermits) {
+        if (permit.createdBy?.email) {
+          try {
+            await this.mailService.sendMail({
+              email: permit.createdBy.email,
+              subject: `Permit đã hết hạn - Permit #${permit.id}`,
+              template: 'permit-expired',
+              context: {
+                receiverName: permit.createdBy.name,
+                permitCode: permit.id,
+                permitName: permit.name,
+                permitLink: `${process.env.FRONTEND_URL}/permit/view/${permit.id}`,
+              },
+            });
+          } catch (error) {
+            console.error(`Failed to send expired email for permit #${permit.id}:`, error);
+          }
+        }
+      }
+
       console.log('Cron expire permit executed successfully');
     });
   }

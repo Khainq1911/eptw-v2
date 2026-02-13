@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permit đã hết hạn</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      background-color: #fff;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #ff9800;
+    }
+
+    p {
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .highlight {
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background-color: #fff3cd;
+      color: #856404;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff9800;
+      color: #fff !important;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+
+    .button:hover {
+      background-color: #e68900;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>⚠️ Permit đã hết hạn</h2>
+    <p>Xin chào <span class="highlight">{{receiverName}}</span>,</p>
+    <p>Permit <span class="highlight">#{{permitCode}}</span> — <strong>{{permitName}}</strong> đã hết hạn.</p>
+    <p>Trạng thái hiện tại: <span class="status-badge">Expired</span></p>
+    <p>Vui lòng kiểm tra và tạo permit mới nếu cần thiết.</p>
+    <a href="{{permitLink}}" class="button">Xem Permit</a>
+    <br/><br/>
+    <p>Trân trọng,<br/>Permit System</p>
+  </div>
+</body>
+</html>
