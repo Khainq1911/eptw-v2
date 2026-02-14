@@ -28,7 +28,7 @@ export class WorkActivityService {
   }
 
   async list(filter: FilterWorkActivityDto) {
-    const qb = AppDataSource.getRepository(WorkActivityEntity)
+    const qb = this.workActivityRepository
       .createQueryBuilder('workActivity')
       .orderBy('workActivity.updatedAt', 'DESC')
       .limit(filter.limit)

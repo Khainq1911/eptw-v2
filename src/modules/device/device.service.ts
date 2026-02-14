@@ -35,7 +35,7 @@ export class DeviceService {
       where: { isUsed: true },
     });
 
-    const qb = AppDataSource.getRepository(DeviceEntity)
+    const qb = this.deviceRepository
       .createQueryBuilder('device')
       .orderBy('device.name', 'ASC')
       .limit(filter.limit)
