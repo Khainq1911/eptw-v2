@@ -1,6 +1,7 @@
-import { Column, Entity, ManyToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { PermitEntity } from './permit.entity';
+import { DeviceNotificationEntity } from './device-notification.entity';
 
 @Entity({ name: 'device' })
 export class DeviceEntity extends BaseEntity {
@@ -16,12 +17,12 @@ export class DeviceEntity extends BaseEntity {
   @Column({ name: 'description', nullable: true })
   description: string;
 
-  @Column({ name: 'location', nullable: true, type: 'jsonb' })
-  location: object;
-
   @Column({ name: 'status', nullable: false, default: 'active' })
   status: string;
 
   @ManyToMany(() => PermitEntity, (permit) => permit.devices)
   permits: PermitEntity[];
+
+  @OneToMany(() => DeviceNotificationEntity, (deviceNotification) => deviceNotification.device)
+  notifications: DeviceNotificationEntity[];
 }

@@ -3,7 +3,8 @@ import { Seeder } from 'typeorm-extension';
 import { UserEntity } from '../entities';
 import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
-import { ROLE } from '@/common/enum';
+import { ROLE } from '../../common/enum';
+
 export default class UserSeeder implements Seeder {
   async run(dataSource: DataSource): Promise<any> {
     await dataSource.getRepository(UserEntity).save({

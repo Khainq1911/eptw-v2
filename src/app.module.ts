@@ -21,6 +21,9 @@ import { S3Module } from './modules/s3-client/s3-client.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RabbitModule } from './modules/rabbitmq/rabitmq.module';
+import { SocketModule } from './modules/socket/socket.module';
+import { DeviceNotificationModule } from './modules/device-notification/device-notification.module';
 
 @Module({
   imports: [
@@ -43,9 +46,12 @@ import { ScheduleModule } from '@nestjs/schedule';
     S3Module,
     RedisModule,
     DashboardModule,
+    RabbitModule,
+    SocketModule,
+    DeviceNotificationModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

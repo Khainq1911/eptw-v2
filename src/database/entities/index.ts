@@ -9,3 +9,4 @@ export * from './device.entity';
 export * from './permit.entity';
 export * from './permit-file.entity';
 export * from './permit-sign.entity';
+export * from './device-notification.entity';

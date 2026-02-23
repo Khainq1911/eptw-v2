@@ -1,20 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  ApprovalTypeEntity,
-  DeviceEntity,
-  RoleEntity,
-  TemplateEntity,
-  UserEntity,
-} from './entities';
-import { TemplateTypeEntity } from './entities/template-type.entity';
-import { PermitEntity } from './entities/permit.entity';
-import { PermitFileEntity } from './entities/permit-file.entity';
-import { WorkActivityEntity } from './entities/work-activity.entity';
-import { PermitSignEntity } from './entities/permit-sign.entity';
-import { PermitLogEntity } from './entities/permit-log.entity';
-import { MenuEntity } from './entities/menu.entity';
 
 @Module({
   imports: [
@@ -31,20 +17,7 @@ import { MenuEntity } from './entities/menu.entity';
         extra: {
           options: '-c timezone=Asia/Ho_Chi_Minh',
         },
-        entities: [
-          UserEntity,
-          RoleEntity,
-          DeviceEntity,
-          TemplateEntity,
-          ApprovalTypeEntity,
-          TemplateTypeEntity,
-          PermitEntity,
-          PermitFileEntity,
-          WorkActivityEntity,
-          PermitSignEntity,
-          PermitLogEntity,
-          MenuEntity,
-        ],
+        entities: [__dirname + '/entities/**/*.{js,ts}'],
         synchronize: false,
       }),
     }),

@@ -42,6 +42,25 @@ services:
       retries: 5
     # KHÔNG expose port DB ra ngoài
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    expose:
+      - "15672"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:15672"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
   adminer:
     image: adminer
     container_name: adminer_ui
@@ -77,6 +96,7 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  rabbitmq_data:
 
 networks:
   backend:

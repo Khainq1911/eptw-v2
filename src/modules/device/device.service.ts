@@ -4,9 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { CreateDeviceDto, DeviceDto, FilterDto } from './device.dto';
 import AppDataSource from '@/database/data-source';
-import { DEVICE_STATUS, DEVICE_STATUS_ALIAS } from '@/common/enum';
+import { DEVICE_STATUS, DEVICE_STATUS_ALIAS, DEVICE_NOTIFICATION_TYPE } from '@/common/enum';
 import { ExcelService } from '../excel/excel.service';
 import { Response } from 'express';
+import { DeviceNotificationService } from '../device-notification/device-notification.service';
 
 @Injectable()
 export class DeviceService {
@@ -14,7 +15,8 @@ export class DeviceService {
     @InjectRepository(DeviceEntity)
     private readonly deviceRepository: Repository<DeviceEntity>,
     private readonly excelService: ExcelService,
-  ) {}
+    private readonly deviceNotificationService: DeviceNotificationService,
+  ) { }
 
   async create(device: CreateDeviceDto): Promise<{ message: string }> {
     const existingDevice = await this.deviceRepository.findOne({
@@ -152,16 +154,27 @@ export class DeviceService {
   }
 
   async getListDevicePosition() {
-    const devices = await this.deviceRepository.find();
+    const devices = await this.deviceRepository.find({
+      where: { status: DEVICE_STATUS.ACTIVE },
+    });
 
-    const res = devices.map((device) => ({
+    const deviceIds = devices.map((d) => d.id);
+    const notifications = await this.deviceNotificationService.getLatestByDeviceIds(deviceIds);
+
+    console.log(notifications);
+
+    const notificationMap = new Map(
+      notifications
+        .filter((n) => n.type === DEVICE_NOTIFICATION_TYPE.LOCATION)
+        .map((n) => [n.deviceId, n.detail]),
+    );
+
+    return devices.map((device) => ({
       id: device.id,
       name: device.name,
       code: device.code,
-      location: device.location,
+      location: notificationMap.get(device.id) ?? null,
     }));
-
-    return res;
   }
 
   async exportExcel(res: Response) {

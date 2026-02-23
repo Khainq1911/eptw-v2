@@ -19,3 +19,9 @@ export enum APPROVAL_TYPE {
   PARALLEL = 'PA',
   SEQUENCE = 'SA',
 }
+
+export enum DEVICE_NOTIFICATION_TYPE {
+  LOCATION = 'location',
+  NOTIFICATION = 'notification',
+  WARNING = 'warning',
+}
