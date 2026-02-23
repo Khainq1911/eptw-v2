@@ -46,8 +46,9 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     restart: always
-    expose:
-      - "15672"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - backend
     healthcheck:
