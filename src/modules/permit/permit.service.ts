@@ -218,7 +218,7 @@ export class PermitService {
 
     let signList: any;
     if (approvalTypeCode === APPROVAL_TYPE.SEQUENCE) {
-      let index = signs.findIndex((s) => s.status === 'signed');
+      let index = signs.findIndex((s) => s.status === 'Signed');
       index = index === -1 ? 0 : index;
 
       signList = signs.map((item, idx) => {
