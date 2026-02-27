@@ -1059,7 +1059,6 @@ export class PermitService {
           ),
         },
         relations: ['createdBy'],
-        lock: { mode: 'pessimistic_write' },
       });
 
       if (!expiredPermits.length) {
@@ -1115,5 +1114,59 @@ export class PermitService {
 
       console.log('Cron expire permit executed successfully');
     });
+  }
+
+  @Cron('0 0 0 * * *')
+  async handleCronExpiringSoon() {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const soonExpiring = await this.permitRepository.find({
+      where: {
+        endTime: Between(now, tomorrow),
+        status: Not(
+          In([
+            PERMIT_STATUS.CLOSED,
+            PERMIT_STATUS.EXPIRED,
+            PERMIT_STATUS.CANCELLED,
+            PERMIT_STATUS.REJECTED,
+          ]),
+        ),
+      },
+      relations: ['createdBy'],
+    });
+
+    if (!soonExpiring.length) {
+      console.log('No permits expiring soon');
+      return;
+    }
+
+    for (const permit of soonExpiring) {
+      if (permit.createdBy?.email) {
+        try {
+          await this.mailService.sendMail({
+            email: permit.createdBy.email,
+            subject: `Permit sắp hết hạn - Permit #${permit.id}`,
+            template: 'permit-expiring-soon',
+            context: {
+              receiverName: permit.createdBy.name,
+              permitCode: permit.id,
+              permitName: permit.name,
+              endTime: permit.endTime.toLocaleString('vi-VN', {
+                timeZone: APP_TIMEZONE,
+              }),
+              permitLink: `${process.env.FRONTEND_URL}/permit/view/${permit.id}`,
+            },
+          });
+        } catch (error) {
+          console.error(
+            `Failed to send expiring soon email for permit #${permit.id}:`,
+            error,
+          );
+        }
+      }
+    }
+
+    console.log(`Notified ${soonExpiring.length} permits expiring soon`);
   }
 }
