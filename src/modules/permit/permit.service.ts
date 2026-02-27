@@ -218,19 +218,17 @@ export class PermitService {
 
     let signList: any;
     if (approvalTypeCode === APPROVAL_TYPE.SEQUENCE) {
-      let index = signs.findIndex((s) => s.status === 'Signed');
-      index = index === -1 ? 0 : index;
+      const firstPendingIndex = signs.findIndex((s) => s.status === 'Pending');
 
-      signList = signs.map((item, idx) => {
-        if (idx > index) {
-          return { ...item, isSignable: false };
-        }
-        return { ...item, isSignable: true };
-      });
+      signList = signs.map((item, idx) => ({
+        ...item,
+        isSignable: idx === firstPendingIndex,
+      }));
     } else {
-      signList = signs.map((item) => {
-        return { ...item, isSignable: true };
-      });
+      signList = signs.map((item) => ({
+        ...item,
+        isSignable: item.status === 'Pending',
+      }));
     }
 
     return {
