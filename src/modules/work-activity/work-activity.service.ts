@@ -52,11 +52,11 @@ export class WorkActivityService {
       });
     }
 
-    const [workActivities, total] = await qb.getManyAndCount();
-
+    const workActivities = await qb.getMany();
+    const total = await this.workActivityRepository.count();
     return {
       items: workActivities,
-      total,
+      total: total,
     };
   }
 

@@ -59,14 +59,15 @@ export class DeviceService {
       qb.andWhere('device.isUsed = :isUsed', { isUsed: filter.isUsed });
     }
 
-    const [devices, number] = await qb.getManyAndCount();
+    const [devices] = await qb.getManyAndCount();
 
-    const countActiveDevice = devices.filter((device) => device.status === DEVICE_STATUS.ACTIVE).length;
-    const countInactiveDevice = devices.filter((device) => device.status === DEVICE_STATUS.MAINTAIN).length;
+    const [allDevice, totalCount] = await this.deviceRepository.findAndCount({ where: { status: DEVICE_STATUS.ACTIVE || DEVICE_STATUS.MAINTAIN } });
+    const countActiveDevice = allDevice.filter((device) => device.status === DEVICE_STATUS.ACTIVE).length;
+    const countInactiveDevice = allDevice.filter((device) => device.status === DEVICE_STATUS.MAINTAIN).length;
 
     return {
       devices,
-      countAll: number,
+      countAll: totalCount,
       countActiveDevice,
       countInactiveDevice,
       countIsUsedDevice,
