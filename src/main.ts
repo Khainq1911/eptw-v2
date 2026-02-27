@@ -7,7 +7,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
-  app.enableCors({ origin: true });
+  app.enableCors({ origin: ["http://14.225.210.20:5000", "http://localhost:5173"] });
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
