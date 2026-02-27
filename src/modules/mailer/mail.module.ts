@@ -24,7 +24,7 @@ import { MailService } from './mail.service';
           from: configService.get<string>('MAIL_FROM'),
         },
         template: {
-          dir: process.cwd() + '/src/modules/mailer/templates/',
+          dir: __dirname + '/templates/',
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
@@ -38,4 +38,4 @@ import { MailService } from './mail.service';
   providers: [MailService],
   exports: [MailService],
 })
-export class MailModule {}
+export class MailModule { }
