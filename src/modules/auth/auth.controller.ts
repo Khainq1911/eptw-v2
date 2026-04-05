@@ -7,8 +7,8 @@ import { Roles } from '@/common/decorators/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-  
+  constructor(private readonly authService: AuthService) { }
+
   @Public()
   @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<any> {
@@ -20,17 +20,19 @@ export class AuthController {
     return await this.authService.registerService(registerDto);
   }
 
+  @Public()
   @Post('forget-password')
   async forgetPassword(@Body('email') email: string): Promise<any> {
     return await this.authService.forgetPasswordService(email);
   }
 
+  @Public()
   @Post('reset-password')
   async resetPassword(
-    @Query('token') token: string,
-    @Body('newPassword') newPassword: string,
+    @Body('token') token: string,
+    @Body('password') password: string,
   ): Promise<any> {
-    return await this.authService.resetPasswordService(token, newPassword);
+    return await this.authService.resetPasswordService(token, password);
   }
 
   @Post('refresh-token')

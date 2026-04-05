@@ -151,6 +151,13 @@ export class AuthService {
         },
       );
 
+      if(payload.exp * 1000 < new Date().getTime()) {
+        throw new HttpException(
+          'Token has expired',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
       const user = await this.userRepository.findOne({
         where: { id: payload.id, email: payload.email },
       });
