@@ -24,6 +24,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RabbitModule } from './modules/rabbitmq/rabitmq.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { DeviceNotificationModule } from './modules/device-notification/device-notification.module';
+import { VnpayModule } from './modules/vnpay/vnpay.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { DeviceNotificationModule } from './modules/device-notification/device-n
     RabbitModule,
     SocketModule,
     DeviceNotificationModule,
+    VnpayModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
